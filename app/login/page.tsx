@@ -167,8 +167,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background text-foreground font-sans flex flex-col items-center justify-center relative overflow-hidden px-4 select-none transition-colors duration-300">
       
       {/* Background visual glows */}
-      <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-sky-500/5 dark:bg-sky-500/10 rounded-full blur-[80px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-[80px] pointer-events-none animate-pulse" />
+      <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-[#8AFF00]/5 dark:bg-[#8AFF00]/10 rounded-full blur-[80px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-[#3f7300]/5 dark:bg-[#3f7300]/10 rounded-full blur-[80px] pointer-events-none animate-pulse" />
       
       {/* Absolute floating toast notifications */}
       <AnimatePresence>
@@ -177,9 +177,9 @@ export default function LoginPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-6 z-50 bg-indigo-600 border border-indigo-400 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2"
+            className="absolute top-6 z-50 bg-zinc-900 border border-[#8AFF00]/30 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-[0_0_25px_rgba(138,255,0,0.15)] flex items-center gap-2"
           >
-            <ShieldCheck className="w-4 h-4 shrink-0" />
+            <ShieldCheck className="w-4 h-4 shrink-0 text-[#8AFF00]" />
             <span>{toastMessage}</span>
           </motion.div>
         )}
@@ -187,7 +187,7 @@ export default function LoginPage() {
 
       {/* Header utility bar */}
       <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
-        <Link href="/" className="flex items-center gap-2 group text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/" className="flex items-center gap-2 group text-muted-foreground hover:text-[#8AFF00] transition-colors">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           <span className="text-xs font-semibold">Back to Landing Page</span>
         </Link>
@@ -196,16 +196,16 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative z-10 py-12">
         <InteractiveGradient 
-          color="#8b5cf6" 
-          glowColor="rgba(139,92,246,0.08)"
+          color="#8AFF00" 
+          glowColor="rgba(138,255,0,0.06)"
           width="100%"
           borderRadius="24px"
-          className="bg-card/45 dark:bg-zinc-950/60 border border-border/80 dark:border-zinc-800/80 shadow-2xl overflow-hidden p-8 flex flex-col items-stretch text-left backdrop-blur-xl"
+          className="bg-card/45 dark:bg-zinc-950/60 border border-border/80 dark:border-zinc-800/80 hover:border-[#8AFF00]/30 transition-all duration-300 shadow-[0_0_30px_rgba(138,255,0,0.02)] hover:shadow-[0_0_40px_rgba(138,255,0,0.08)] overflow-hidden p-8 flex flex-col items-stretch text-left backdrop-blur-xl"
         >
           {/* Logo header */}
           <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400 via-indigo-500 to-purple-600 flex items-center justify-center shadow-lg mb-3">
-              <Workflow className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#8AFF00] to-[#3d7a00] flex items-center justify-center shadow-[0_0_15px_rgba(138,255,0,0.25)] mb-3">
+              <Workflow className="w-5 h-5 text-black" />
             </div>
             <h2 className="text-2xl font-black tracking-tight text-foreground">
               {step === "auth" ? "Welcome to Synchropia" : 
@@ -250,8 +250,8 @@ export default function LoginPage() {
                 exit={{ opacity: 0 }}
                 className="flex flex-col items-center justify-center py-12 text-center space-y-4"
               >
-                <div className="p-4 bg-purple-500/5 border border-purple-500/20 text-purple-600 dark:text-purple-300 rounded-2xl flex items-center gap-3">
-                  <RefreshCw className="w-5 h-5 animate-spin text-purple-500" />
+                <div className="p-4 bg-[#8AFF00]/5 border border-[#8AFF00]/15 text-[#8AFF00] dark:text-[#8AFF00]/90 rounded-2xl flex items-center gap-3">
+                  <RefreshCw className="w-5 h-5 animate-spin text-[#8AFF00]" />
                   <span className="text-xs font-semibold">Contacting SSO Gateway...</span>
                 </div>
                 <p className="text-muted-foreground text-xs max-w-[280px] leading-relaxed">
@@ -274,8 +274,8 @@ export default function LoginPage() {
                     onClick={() => { setAuthMethod("credentials"); setStep("auth"); }}
                     className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
                       authMethod === "credentials" 
-                        ? "bg-card text-foreground shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm" 
+                        : "text-muted-foreground hover:text-[#8AFF00]"
                     }`}
                   >
                     <KeyRound className="w-3 h-3" />
@@ -285,8 +285,8 @@ export default function LoginPage() {
                     onClick={() => { setAuthMethod("magic"); setStep("auth"); }}
                     className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
                       authMethod === "magic" 
-                        ? "bg-card text-foreground shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm" 
+                        : "text-muted-foreground hover:text-[#8AFF00]"
                     }`}
                   >
                     <Fingerprint className="w-3 h-3" />
@@ -296,8 +296,8 @@ export default function LoginPage() {
                     onClick={() => { setAuthMethod("sso"); setStep("auth"); }}
                     className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
                       authMethod === "sso" 
-                        ? "bg-card text-foreground shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm" 
+                        : "text-muted-foreground hover:text-[#8AFF00]"
                     }`}
                   >
                     <Building className="w-3 h-3" />
@@ -314,8 +314,8 @@ export default function LoginPage() {
                         onClick={() => setActiveTab("signin")}
                         className={`flex-1 text-center py-2 text-xs font-bold border-b-2 transition-all ${
                           activeTab === "signin" 
-                            ? "border-purple-500 text-foreground" 
-                            : "border-transparent text-muted-foreground hover:text-foreground"
+                            ? "border-[#8AFF00] text-[#8AFF00]" 
+                            : "border-transparent text-muted-foreground hover:text-[#8AFF00]"
                         }`}
                       >
                         Sign In
@@ -324,8 +324,8 @@ export default function LoginPage() {
                         onClick={() => setActiveTab("signup")}
                         className={`flex-1 text-center py-2 text-xs font-bold border-b-2 transition-all ${
                           activeTab === "signup" 
-                            ? "border-purple-500 text-foreground" 
-                            : "border-transparent text-muted-foreground hover:text-foreground"
+                            ? "border-[#8AFF00] text-[#8AFF00]" 
+                            : "border-transparent text-muted-foreground hover:text-[#8AFF00]"
                         }`}
                       >
                         Create Account
@@ -345,7 +345,7 @@ export default function LoginPage() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="e.g. engineering@company.com"
-                          className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-foreground outline-none transition-colors"
+                          className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] text-foreground outline-none transition-colors"
                         />
                       </div>
 
@@ -357,7 +357,7 @@ export default function LoginPage() {
                               <Lock className="w-3.5 h-3.5" />
                               Password
                             </label>
-                            <Link href="#" className="text-[10px] text-purple-600 dark:text-purple-400 hover:underline">
+                            <Link href="#" className="text-[10px] text-[#8AFF00] hover:underline">
                               Forgot?
                             </Link>
                           </div>
@@ -367,7 +367,7 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••••••"
-                            className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-foreground outline-none transition-colors"
+                            className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] text-foreground outline-none transition-colors"
                           />
                         </div>
                       ) : (
@@ -380,7 +380,7 @@ export default function LoginPage() {
                             placeholder="Min. 8 characters"
                             showScoreNumber={true}
                             inputProps={{
-                              className: "w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-550 text-foreground outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors",
+                              className: "w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-550 text-foreground outline-none focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] transition-colors",
                               type: "password"
                             }}
                           />
@@ -389,11 +389,8 @@ export default function LoginPage() {
 
                       <ConfettiButton
                         type="submit"
-                        variant="gradient"
-                        size="lg"
-                        animation="glow"
                         loading={isLoading}
-                        className="w-full rounded-xl text-xs font-bold h-11 mt-4"
+                        className="w-full rounded-xl text-xs font-extrabold h-11 mt-4 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 cursor-pointer"
                       >
                         {activeTab === "signin" ? "Verify Security Credentials" : "Provision Factory Node"}
                       </ConfettiButton>
@@ -404,7 +401,7 @@ export default function LoginPage() {
                 {/* 2. MAGIC LINK FLOW */}
                 {authMethod === "magic" && (
                   <form onSubmit={handleMagicLinkRequest} className="space-y-4">
-                    <div className="p-3.5 rounded-xl bg-sky-500/5 border border-sky-500/15 text-sky-700 dark:text-sky-300 text-xs leading-relaxed">
+                    <div className="p-3.5 rounded-xl bg-[#8AFF00]/5 border border-[#8AFF00]/10 text-foreground dark:text-zinc-300 text-xs leading-relaxed">
                       Enter your address to receive a secure, 6-digit one-time passcode. No password required.
                     </div>
                     <div className="space-y-2">
@@ -418,16 +415,13 @@ export default function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="e.g. workspace@company.com"
-                        className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-foreground outline-none transition-colors"
+                        className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] text-foreground outline-none transition-colors"
                       />
                     </div>
                     <ConfettiButton
                       type="submit"
-                      variant="gradient"
-                      size="lg"
-                      animation="glow"
                       loading={isLoading}
-                      className="w-full rounded-xl text-xs font-bold h-11 mt-4"
+                      className="w-full rounded-xl text-xs font-extrabold h-11 mt-4 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 cursor-pointer"
                     >
                       Transmit OTP Code
                     </ConfettiButton>
@@ -437,7 +431,7 @@ export default function LoginPage() {
                 {/* 3. ENTERPRISE SSO FLOW */}
                 {authMethod === "sso" && (
                   <form onSubmit={handleSsoSubmit} className="space-y-4">
-                    <div className="p-3.5 rounded-xl bg-indigo-500/5 border border-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-xs leading-relaxed">
+                    <div className="p-3.5 rounded-xl bg-[#8AFF00]/5 border border-[#8AFF00]/10 text-foreground dark:text-zinc-300 text-xs leading-relaxed">
                       Authenticate utilizing corporate SAML 2.0 or OIDC gateways. Enter your enterprise workspace email below.
                     </div>
                     <div className="space-y-2">
@@ -451,16 +445,13 @@ export default function LoginPage() {
                         value={enterpriseEmail}
                         onChange={(e) => setEnterpriseEmail(e.target.value)}
                         placeholder="e.g. engineer@microsoft.com"
-                        className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-foreground outline-none transition-colors"
+                        className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] text-foreground outline-none transition-colors"
                       />
                     </div>
                     <ConfettiButton
                       type="submit"
-                      variant="gradient"
-                      size="lg"
-                      animation="glow"
                       loading={isLoading}
-                      className="w-full rounded-xl text-xs font-bold h-11 mt-4"
+                      className="w-full rounded-xl text-xs font-extrabold h-11 mt-4 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 cursor-pointer"
                     >
                       Authenticate via SSO
                     </ConfettiButton>
@@ -532,10 +523,10 @@ export default function LoginPage() {
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-300 text-xs flex gap-3 shadow-sm">
-                  <ShieldAlert className="w-5 h-5 shrink-0 text-amber-500 animate-pulse" />
+                <div className="p-4 rounded-2xl bg-[#8AFF00]/5 border border-[#8AFF00]/10 text-foreground dark:text-zinc-350 text-xs flex gap-3 shadow-sm">
+                  <ShieldAlert className="w-5 h-5 shrink-0 text-[#8AFF00] animate-pulse" />
                   <div>
-                    <span className="font-bold">2FA Verification:</span> Secure TOTP authentication keys are active for this database plane. Input Google Authenticator code.
+                    <span className="font-bold text-[#8AFF00]">2FA Verification:</span> Secure TOTP authentication keys are active for this database plane. Input Google Authenticator code.
                   </div>
                 </div>
 
@@ -551,7 +542,7 @@ export default function LoginPage() {
                         onChange={(val) => setOtpCode(val)}
                       >
                         <InputOTPGroup className="gap-1.5">
-                          <InputOTPSlot index={0} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground focus-within:border-amber-500 focus-within:ring-1 focus-within:ring-amber-500/50" />
+                          <InputOTPSlot index={0} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground animate-pulse" />
                           <InputOTPSlot index={1} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
                           <InputOTPSlot index={2} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
                         </InputOTPGroup>
@@ -567,12 +558,9 @@ export default function LoginPage() {
 
                   <ConfettiButton
                     type="submit"
-                    variant="gradient"
-                    size="lg"
-                    animation="glow"
                     loading={isLoading}
                     disabled={otpCode.length < 6}
-                    className="w-full rounded-xl text-xs font-bold h-11"
+                    className="w-full rounded-xl text-xs font-extrabold h-11 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                   >
                     Establish Secure Session
                   </ConfettiButton>
@@ -580,7 +568,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => { setStep("auth"); setOtpCode(""); }}
-                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors pt-2"
+                    className="text-xs text-muted-foreground hover:text-[#8AFF00] flex items-center gap-1.5 transition-colors pt-2 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     Back to Credentials
@@ -597,10 +585,10 @@ export default function LoginPage() {
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                <div className="p-4 rounded-2xl bg-sky-500/5 border border-sky-500/20 text-sky-700 dark:text-sky-300 text-xs flex gap-3 shadow-sm">
-                  <Fingerprint className="w-5 h-5 shrink-0 text-sky-500 animate-pulse" />
+                <div className="p-4 rounded-2xl bg-[#8AFF00]/5 border border-[#8AFF00]/10 text-foreground dark:text-zinc-350 text-xs flex gap-3 shadow-sm">
+                  <Fingerprint className="w-5 h-5 shrink-0 text-[#8AFF00] animate-pulse" />
                   <div>
-                    <span className="font-bold">Verify Magic Link:</span> Input the 6-digit verification code transmitted to your email to authenticate this browser container.
+                    <span className="font-bold text-[#8AFF00]">Verify Magic Link:</span> Input the 6-digit verification code transmitted to your email to authenticate this browser container.
                   </div>
                 </div>
 
@@ -632,12 +620,9 @@ export default function LoginPage() {
 
                   <ConfettiButton
                     type="submit"
-                    variant="gradient"
-                    size="lg"
-                    animation="glow"
                     loading={isLoading}
                     disabled={magicCode.length < 6}
-                    className="w-full rounded-xl text-xs font-bold h-11"
+                    className="w-full rounded-xl text-xs font-extrabold h-11 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                   >
                     Verify Passcode
                   </ConfettiButton>
@@ -645,7 +630,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => { setStep("auth"); setMagicCode(""); }}
-                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors pt-2"
+                    className="text-xs text-muted-foreground hover:text-[#8AFF00] flex items-center gap-1.5 transition-colors pt-2 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     Back to Email Lookup

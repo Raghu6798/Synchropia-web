@@ -15,7 +15,7 @@ import GlowingCards, { GlowingCard } from "@/components/lightswind/glowing-cards
 import { ConfettiButton } from "@/components/lightswind/confetti-button";
 import { TrustedUsers } from "@/components/lightswind/trusted-users";
 import { ComicText } from "@/components/ui/cosmic-text";
-import { PricingWithChart } from "@/components/ui/pricing-with-chart";
+import { PricingCreative } from "../ui/pricing-with-chart";
 import { 
   Shield, 
   Workflow, 
@@ -351,7 +351,7 @@ export function LandingPage() {
       {/* Pricing Section */}
       <section className="bg-background py-20 px-4 sm:px-6 lg:px-8 border-t border-border overflow-hidden" id="pricing">
         <div className="max-w-6xl mx-auto">
-          <PricingWithChart />
+          <PricingCreative />
         </div>
       </section>
 

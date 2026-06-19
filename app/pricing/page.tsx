@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import Header from "@/components/layout/Header";
-import { PricingWithChart } from "@/components/ui/pricing-with-chart";
+import { PricingCreative } from "@/components/ui/pricing-with-chart";
 import { cn } from "@/lib/utils";
 
 export default function PricingPage() {
@@ -29,7 +29,7 @@ export default function PricingPage() {
       <Header isCompact={isCompact} isDarkMode={isDarkMode} onToggleTheme={handleToggleTheme} />
 
       <div className="relative flex min-h-screen w-full items-center justify-center px-4 pt-32 pb-16 bg-[radial-gradient(35%_80%_at_50%_0%,--theme(--color-foreground/.1),transparent)]">
-        <PricingWithChart />
+        <PricingCreative />
 
         {/* Dots background overlay */}
         <div
