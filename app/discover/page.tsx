@@ -95,22 +95,15 @@ export default function DiscoverPage() {
 
       {/* ====== BACKGROUND LAYER: Subtle green nebula & Stars ====== */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Nebula cloud center */}
-        <div
-          className="absolute top-[30%] left-[35%] w-[50%] h-[50%] opacity-20"
+        {/* Top Nebula Image */}
+        <div 
+          className="absolute top-0 left-0 w-full h-[900px] opacity-50 mix-blend-screen"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(138,255,0,0.15) 0%, transparent 70%)',
-            filter: 'blur(60px)',
-            animation: 'nebula-drift 20s ease-in-out infinite',
-          }}
-        />
-        {/* Bottom-right nebula patch */}
-        <div
-          className="absolute bottom-[10%] right-[5%] w-[35%] h-[35%] opacity-15"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(138,255,0,0.12) 0%, transparent 65%)',
-            filter: 'blur(50px)',
-            animation: 'nebula-drift 25s ease-in-out infinite 5s',
+            backgroundImage: "url('/nebula-bg.png')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'top center',
+            maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)'
           }}
         />
 
