@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -16,12 +16,12 @@ import { ConfettiButton } from "@/components/lightswind/confetti-button";
 import { TrustedUsers } from "@/components/lightswind/trusted-users";
 import { ComicText } from "@/components/ui/cosmic-text";
 import { PricingCreative } from "../ui/pricing-with-chart";
-import { 
-  Shield, 
-  Workflow, 
-  RefreshCw, 
-  Users, 
-  Flame, 
+import {
+  Shield,
+  Workflow,
+  RefreshCw,
+  Users,
+  Flame,
   Lock,
   ArrowRight,
   GitPullRequest,
@@ -53,7 +53,7 @@ export function LandingPage() {
     return {
       width: 800,
       height: 800,
-      onRender: () => {},
+      onRender: () => { },
       devicePixelRatio: 2,
       phi: 0,
       theta: 0.2,
@@ -141,7 +141,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden selection:bg-[#8AFF00]/30 selection:text-zinc-950 transition-colors duration-300">
-      
+
       {/* Floating Navbar */}
       <Header isCompact={isCompact} isDarkMode={isDarkMode} onToggleTheme={handleToggleTheme} />
 
@@ -161,7 +161,7 @@ export function LandingPage() {
 
         {/* Hero Content Container */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center space-y-6">
-          
+
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-tight bg-clip-text text-transparent bg-gradient-to-r from-zinc-950 via-zinc-800 to-zinc-650 dark:from-white dark:via-zinc-100 dark:to-zinc-400">
             The Agentic Software <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 to-[#8AFF00] dark:from-white dark:to-[#8AFF00]">
@@ -174,7 +174,7 @@ export function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 pt-4 w-full sm:w-auto">
-            <ConfettiButton 
+            <ConfettiButton
               variant="gradient"
               size="lg"
               animation="glow"
@@ -185,8 +185,8 @@ export function LandingPage() {
             >
               Deploy Your Swarm Free
             </ConfettiButton>
-            
-            <Link 
+
+            <Link
               href="#swarms"
               className="flex items-center justify-center h-12 px-6 rounded-md border border-border bg-card hover:bg-muted text-sm font-semibold transition-all text-foreground"
             >
@@ -194,7 +194,7 @@ export function LandingPage() {
             </Link>
           </div>
 
-        
+
         </div>
       </section>
 
@@ -251,7 +251,7 @@ export function LandingPage() {
                 desc: "Easily integrates with corporate Identity Providers (IDPs) via Enterprise Single Sign-On SAML 2.0 and OIDC plugins."
               }
             ].map((feat, i) => (
-              <div 
+              <div
                 key={i}
                 className="p-6 rounded-2xl bg-card/40 border border-border hover:border-[#8AFF00]/40 hover:bg-card/75 dark:bg-zinc-950/40 dark:border-zinc-900 dark:hover:border-[#8AFF00]/45 dark:hover:bg-zinc-950/80 transition-all duration-300 hover:shadow-[0_0_20px_rgba(138,255,0,0.08)]"
               >
@@ -278,9 +278,9 @@ export function LandingPage() {
             </p>
           </div>
 
-          <GlowingCards 
-            glowRadius={30} 
-            gap="2rem" 
+          <GlowingCards
+            glowRadius={30}
+            gap="2rem"
             className="w-full"
             padding="2rem 0"
           >
@@ -304,7 +304,7 @@ export function LandingPage() {
                 color: "#8AFF00"
               }
             ].map((test, index) => (
-              <GlowingCard 
+              <GlowingCard
                 key={index}
                 className="border-border/80 dark:border-zinc-800/80 bg-card/40 dark:bg-zinc-950/40 p-6 flex flex-col justify-between max-w-[340px]"
                 glowColor={test.color}
@@ -339,8 +339,8 @@ export function LandingPage() {
           </p>
           <div className="pt-8 flex justify-center">
             <div className="relative w-[24rem] h-[24rem] max-w-full aspect-square">
-              <Globe 
-                className="absolute inset-0" 
+              <Globe
+                className="absolute inset-0"
                 config={globeConfig}
               />
             </div>
@@ -358,10 +358,10 @@ export function LandingPage() {
       {/* CTA Conversion Section */}
       <section className="bg-background py-24 border-t border-border relative overflow-hidden" id="cta-section">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(138,255,0,0.05)_0%,rgba(0,0,0,0)_60%)] dark:bg-[radial-gradient(circle_at_center,rgba(138,255,0,0.07)_0%,rgba(0,0,0,0)_60%)] pointer-events-none" />
-        
+
         {/* ScrollTimeline to demonstrate the swarm end-to-end process */}
         <div className="w-full mb-20">
-          <ScrollTimeline 
+          <ScrollTimeline
             events={swarmMethodologyEvents}
             title="Autonomous Swarm Development Lifecycle"
             subtitle="Scroll to explore how our specialized software agents collaborate to deliver code end-to-end."
@@ -390,17 +390,17 @@ export function LandingPage() {
               SHIPPED!
             </ComicText>
           </div>
-          
+
           <h2 className="text-3xl md:text-5xl font-black tracking-tight text-foreground leading-tight">
             Ready to Build at the Speed of Thought?
           </h2>
-          
+
           <p className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto leading-relaxed">
             Provision your secure VPC agent node and coordinate SDE, Data, and GenAI Swarms today. Get started in minutes.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <ConfettiButton 
+            <ConfettiButton
               variant="gradient"
               size="lg"
               animation="glow"
@@ -411,8 +411,8 @@ export function LandingPage() {
             >
               Initialize Factory Node
             </ConfettiButton>
-            
-            <Link 
+
+            <Link
               href="mailto:team@synchropia.ai"
               className="flex items-center justify-center h-12 px-8 rounded-md border border-border bg-card hover:bg-muted text-sm font-semibold transition-colors text-foreground"
             >

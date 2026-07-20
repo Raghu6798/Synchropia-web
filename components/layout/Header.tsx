@@ -6,6 +6,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Moon, Sun, LogOut, LayoutDashboard, Menu, X, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '@/store';
+import { logout } from '@/store/slices/authSlice';
+import { signOut } from '@/lib/auth-client';
 
 const navItems = [
   {
@@ -39,35 +43,11 @@ type HeaderProps = {
 export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: HeaderProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<{ email: string; name: string } | null>(null);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const dispatch = useDispatch();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  // Sync user state from localStorage on mount & listen to state changes
-  useEffect(() => {
-    const checkUser = () => {
-      const stored = localStorage.getItem('user');
-      if (stored) {
-        try {
-          setUser(JSON.parse(stored));
-        } catch (e) {
-          localStorage.removeItem('user');
-        }
-      } else {
-        setUser(null);
-      }
-    };
-    checkUser();
-    
-    // Listen for custom login/logout events or focus
-    window.addEventListener('storage', checkUser);
-    window.addEventListener('user-auth-change', checkUser);
-    return () => {
-      window.removeEventListener('storage', checkUser);
-      window.removeEventListener('user-auth-change', checkUser);
-    };
-  }, []);
 
   // Handle click outside to close dropdowns
   useEffect(() => {
@@ -83,54 +63,53 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSignOut = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+  const handleSignOut = async () => {
+    await signOut();
+    dispatch(logout());
     setUserMenuOpen(false);
-    window.dispatchEvent(new Event('user-auth-change'));
     window.location.href = '/';
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 transition-all duration-300">
+    <>
+    <header className="fixed inset-x-0 top-0 z-50 px-4 transition-all duration-300 pointer-events-none">
       <div
         className={cn(
-          'mx-auto mt-3 flex max-w-7xl items-center justify-between rounded-3xl border backdrop-blur-md transition-all duration-300 relative overflow-hidden',
-          isCompact ? 'px-5 py-2 shadow-md' : 'px-6 py-3 shadow-lg',
-          isDarkMode 
-            ? 'border-white/10 bg-black/40 text-white' 
-            : 'border-black/10 bg-white/70 text-black'
+          'mx-auto mt-4 flex max-w-7xl items-center justify-between relative pointer-events-auto transition-all duration-300',
+          isCompact ? 'py-2' : 'py-3'
         )}
       >
         {/* Logo and App Name */}
-        <Link href="/" className="flex items-center gap-2.5 group relative z-10">
-          <div
-            className={cn(
-              'font-extrabold tracking-widest transition-all duration-300 bg-clip-text text-transparent bg-gradient-to-r',
-              isCompact ? 'text-base sm:text-lg' : 'text-lg sm:text-xl',
-              isDarkMode 
-                ? 'from-white via-zinc-100 to-zinc-400' 
-                : 'from-black via-zinc-800 to-zinc-650'
-            )}
-          >
-            Synchropia
-          </div>
-        </Link>
+        <div className="flex-1 flex justify-start">
+          <Link href="/" className="flex items-center gap-2.5 group relative z-10">
+            <div
+              className={cn(
+                'font-extrabold tracking-widest transition-all duration-300 bg-clip-text text-transparent bg-gradient-to-r',
+                isCompact ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl',
+                isDarkMode
+                  ? 'from-white via-zinc-100 to-zinc-400'
+                  : 'from-black via-zinc-800 to-zinc-650'
+              )}
+            >
+              Synchropia
+            </div>
+          </Link>
+        </div>
 
         {/* Dynamic Navigation Section */}
-        <nav ref={navRef} className="hidden items-center lg:flex gap-1 relative z-10">
+        <nav ref={navRef} className={cn("hidden items-center lg:flex gap-1 relative z-10 rounded-full border backdrop-blur-md px-4 py-2 shadow-sm transition-all", isDarkMode ? 'border-white/10 bg-black/40 text-white' : 'border-black/10 bg-white/70 text-black')}>
           {navItems.map((item) => (
             <div key={item.label} className="relative">
               {item.children ? (
                 <button
                   onClick={() => setOpenDropdown(openDropdown === item.label ? null : item.label)}
                   className={cn(
-                    'flex items-center gap-1 rounded-lg px-4 py-2 transition-colors font-medium',
-                    isCompact ? 'text-xs' : 'text-sm',
+                    'flex items-center gap-1 rounded-full px-4 py-2 transition-all duration-300 font-medium',
+                    isCompact ? 'text-sm' : 'text-base',
                     isDarkMode
                       ? 'text-zinc-350 hover:text-white hover:bg-white/5'
                       : 'text-zinc-700 hover:text-black hover:bg-black/5',
-                    openDropdown === item.label 
+                    openDropdown === item.label
                       ? (isDarkMode ? 'bg-white/10 text-white' : 'bg-black/10 text-black')
                       : ''
                   )}
@@ -148,8 +127,8 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
                 <Link
                   href={item.href || '#'}
                   className={cn(
-                    'rounded-lg px-4 py-2 transition-colors font-medium block',
-                    isCompact ? 'text-xs' : 'text-sm',
+                    'rounded-full px-4 py-2 transition-all duration-300 font-medium block',
+                    isCompact ? 'text-sm' : 'text-base',
                     isDarkMode
                       ? 'text-zinc-350 hover:text-white hover:bg-white/5'
                       : 'text-zinc-700 hover:text-black hover:bg-black/5'
@@ -192,43 +171,8 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
         </nav>
 
         {/* Right Section */}
-        <div className="flex items-center gap-3 relative z-10">
-          {/* Theme Toggle Button */}
-          {onToggleTheme && (
-            <button
-              onClick={onToggleTheme}
-              className={cn(
-                'flex items-center justify-center rounded-lg p-2 transition-all duration-300 hover:scale-110 active:scale-95',
-                isDarkMode
-                  ? 'text-zinc-350 hover:bg-white/5 hover:text-white'
-                  : 'text-zinc-700 hover:bg-black/5 hover:text-black'
-              )}
-              aria-label="Toggle theme"
-            >
-              {isDarkMode ? (
-                <Sun className="h-4.5 w-4.5 transition-transform duration-300" />
-              ) : (
-                <Moon className="h-4.5 w-4.5 transition-transform duration-300" />
-              )}
-            </button>
-          )}
-
-          {/* GitHub Star Button */}
-          <Link
-            href="https://github.com/Raghu6798/Tenacity/tree/main"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-                'hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-all duration-200 border text-xs',
-                isDarkMode 
-                    ? 'border-white/10 bg-white/5 hover:bg-white/10 text-white' 
-                    : 'border-black/10 bg-black/5 hover:bg-black/10 text-black'
-            )}
-          >
-            <Star className="h-3.5 w-3.5 fill-current text-amber-400" />
-            <span>GitHub</span>
-          </Link>
-
+        <div className="flex-1 flex justify-end relative z-10">
+          <div className={cn("flex items-center gap-2 rounded-full border backdrop-blur-md px-2.5 py-1.5 shadow-sm transition-all", isDarkMode ? 'border-white/10 bg-black/40 text-white' : 'border-black/10 bg-white/70 text-black')}>
           {/* Authentication UI */}
           {user ? (
             /* Logged In View */
@@ -289,7 +233,8 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
               <Link
                 href="/login"
                 className={cn(
-                  'rounded-lg px-3 py-1.5 transition-colors font-bold text-xs',
+                  'rounded-full px-3 py-1.5 transition-all duration-300 font-bold',
+                  isCompact ? 'text-sm' : 'text-base',
                   isDarkMode
                     ? 'text-zinc-350 hover:text-white'
                     : 'text-zinc-700 hover:text-black'
@@ -300,7 +245,8 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
               <Link
                 href="/login?signup=true"
                 className={cn(
-                  'rounded-lg font-bold shadow-md transition-colors text-xs px-3.5 py-1.5',
+                  'rounded-full font-bold shadow-md transition-all duration-300 px-3.5 py-1.5',
+                  isCompact ? 'text-sm' : 'text-base',
                   isDarkMode
                     ? 'bg-white text-black hover:bg-zinc-100'
                     : 'bg-black text-white hover:bg-zinc-900'
@@ -315,12 +261,13 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className={cn(
-              'lg:hidden flex items-center justify-center rounded-lg p-2 transition-colors',
+              'lg:hidden flex items-center justify-center rounded-full p-2 transition-colors',
               isDarkMode ? 'text-zinc-350 hover:bg-white/5' : 'text-zinc-700 hover:bg-black/5'
             )}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
+          </div>
         </div>
       </div>
 
@@ -372,5 +319,26 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
         </div>
       )}
     </header>
+
+    {/* Theme Toggle Button - Bottom Left */}
+    {onToggleTheme && (
+      <button
+        onClick={onToggleTheme}
+        className={cn(
+          'fixed bottom-6 left-6 z-50 flex items-center justify-center rounded-full p-3 transition-all duration-300 hover:scale-110 active:scale-95 border backdrop-blur-md shadow-lg pointer-events-auto',
+          isDarkMode
+            ? 'border-white/10 bg-black/60 text-zinc-350 hover:bg-white/10 hover:text-white'
+            : 'border-black/10 bg-white/80 text-zinc-700 hover:bg-black/10 hover:text-black'
+        )}
+        aria-label="Toggle theme"
+      >
+        {isDarkMode ? (
+          <Sun className="h-5 w-5 transition-transform duration-300" />
+        ) : (
+          <Moon className="h-5 w-5 transition-transform duration-300" />
+        )}
+      </button>
+    )}
+    </>
   );
 }

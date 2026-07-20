@@ -2,13 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { signIn } from "@/lib/auth-client";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Workflow, 
-  Mail, 
-  Lock, 
-  ArrowLeft, 
-  ShieldCheck, 
+import {
+  Workflow,
+  Mail,
+  Lock,
+  ArrowLeft,
+  ShieldCheck,
   ShieldAlert,
   ArrowRight,
   Fingerprint,
@@ -32,7 +35,7 @@ export default function LoginPage() {
   const [authMethod, setAuthMethod] = useState<"credentials" | "magic" | "sso">("credentials");
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [step, setStep] = useState<"auth" | "twoFactor" | "verifyMagic" | "ssoRedirect">("auth");
-  
+
   // Fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +43,7 @@ export default function LoginPage() {
   const [otpCode, setOtpCode] = useState("");
   const [magicCode, setMagicCode] = useState("");
   const [enterpriseEmail, setEnterpriseEmail] = useState("");
-  
+
   // Feedback States
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -52,12 +55,14 @@ export default function LoginPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const { user, status } = useSelector((state: RootState) => state.auth);
+
   // Check if user is already logged in, redirect home
   useEffect(() => {
-    if (localStorage.getItem("user")) {
+    if (status === "authenticated" && user) {
       window.location.href = "/";
     }
-  }, []);
+  }, [status, user]);
 
   // Submit Credentials (Email/Password)
   const handleCredentialsSubmit = (e: React.FormEvent) => {
@@ -85,16 +90,23 @@ export default function LoginPage() {
   };
 
   // Submit Magic Link / Email OTP Code request
-  const handleMagicLinkRequest = (e: React.FormEvent) => {
+  const handleMagicLinkRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      await signIn.magicLink({
+        email,
+        callbackURL: "/",
+      });
       setIsLoading(false);
-      setStep("verifyMagic");
-      triggerToast(`6-digit temporary passcode transmitted to ${email}`);
-    }, 1500);
+      triggerToast(`Magic link securely transmitted to ${email}`);
+      // The user will click the link in their email to log in
+    } catch (error) {
+      setIsLoading(false);
+      triggerToast("Failed to generate Magic Link.");
+    }
   };
 
   // Verify Magic Passcode (Email OTP)
@@ -109,17 +121,25 @@ export default function LoginPage() {
     }, 1500);
   };
 
-  // Submit Enterprise SSO Domain lookup
-  const handleSsoSubmit = (e: React.FormEvent) => {
+  // Submit Enterprise SSO Domain lookup via Better Auth
+  const handleSsoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!enterpriseEmail) return;
 
     setIsLoading(true);
     setStep("ssoRedirect");
-    setTimeout(() => {
+
+    try {
+      // Trigger Better Auth Okta flow. It handles redirecting smoothly.
+      await signIn.oauth2({
+        providerId: "okta",
+        callbackURL: "/",
+      });
+    } catch (error) {
       setIsLoading(false);
-      handleLoginSuccess(enterpriseEmail);
-    }, 2500);
+      setStep("auth");
+      triggerToast("SSO Authentication failed.");
+    }
   };
 
   // TOTP Code Submit
@@ -134,16 +154,24 @@ export default function LoginPage() {
     }, 1500);
   };
 
-  // Social OAuth trigger simulation
-  const handleSocialLogin = (provider: string) => {
+  // Social OAuth trigger
+  const handleSocialLogin = async (provider: string) => {
     setIsLoading(true);
     triggerToast(`Establishing handshake with ${provider} OAuth...`);
-    setTimeout(() => {
+
+    try {
+      if (provider === "Bitbucket") {
+        await signIn.oauth2({ providerId: "bitbucket", callbackURL: "/" });
+      } else {
+        await signIn.social({
+          provider: provider.toLowerCase() as "google" | "github" | "gitlab",
+          callbackURL: "/"
+        });
+      }
+    } catch (error) {
       setIsLoading(false);
-      // Shift to TOTP step
-      setStep("twoFactor");
-      triggerToast(`${provider} credentials verified. Please enter TOTP code.`);
-    }, 1200);
+      triggerToast(`${provider} handshake failed.`);
+    }
   };
 
   // Complete Simulated Auth Session
@@ -156,7 +184,7 @@ export default function LoginPage() {
     localStorage.setItem("user", JSON.stringify(mockUser));
     // Dispatch local state change event for header
     window.dispatchEvent(new Event("user-auth-change"));
-    
+
     triggerToast("Security context established. Loading dashboard node...");
     setTimeout(() => {
       window.location.href = "/";
@@ -165,11 +193,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans flex flex-col items-center justify-center relative overflow-hidden px-4 select-none transition-colors duration-300">
-      
+
       {/* Background visual glows */}
       <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-[#8AFF00]/5 dark:bg-[#8AFF00]/10 rounded-full blur-[80px] pointer-events-none animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-[#3f7300]/5 dark:bg-[#3f7300]/10 rounded-full blur-[80px] pointer-events-none animate-pulse" />
-      
+
       {/* Absolute floating toast notifications */}
       <AnimatePresence>
         {toastMessage && (
@@ -195,8 +223,8 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-md relative z-10 py-12">
-        <InteractiveGradient 
-          color="#8AFF00" 
+        <InteractiveGradient
+          color="#8AFF00"
           glowColor="rgba(138,255,0,0.06)"
           width="100%"
           borderRadius="24px"
@@ -208,23 +236,23 @@ export default function LoginPage() {
               <Workflow className="w-5 h-5 text-black" />
             </div>
             <h2 className="text-2xl font-black tracking-tight text-foreground">
-              {step === "auth" ? "Welcome to Synchropia" : 
-               step === "twoFactor" ? "Security Verification" : 
-               step === "verifyMagic" ? "Confirm One-Time Passcode" :
-               "SSO Tunnel Routing"}
+              {step === "auth" ? "Welcome to Synchropia" :
+                step === "twoFactor" ? "Security Verification" :
+                  step === "verifyMagic" ? "Confirm One-Time Passcode" :
+                    "SSO Tunnel Routing"}
             </h2>
             <p className="text-muted-foreground text-xs mt-1">
-              {step === "auth" ? "The Agentic Software Delivery Factory" : 
-               step === "twoFactor" ? "VPC access requests require authenticating TOTP keys" :
-               step === "verifyMagic" ? "Confirm secure temporary token sent to email" :
-               "Routing access request through enterprise identity provider"}
+              {step === "auth" ? "The Agentic Software Delivery Factory" :
+                step === "twoFactor" ? "VPC access requests require authenticating TOTP keys" :
+                  step === "verifyMagic" ? "Confirm secure temporary token sent to email" :
+                    "Routing access request through enterprise identity provider"}
             </p>
           </div>
 
           <AnimatePresence mode="wait">
             {success ? (
               /* Success Screen */
-              <motion.div 
+              <motion.div
                 key="success"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -243,7 +271,7 @@ export default function LoginPage() {
               </motion.div>
             ) : step === "ssoRedirect" ? (
               /* Enterprise SSO redirection screen */
-              <motion.div 
+              <motion.div
                 key="ssoRedirect"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -260,7 +288,7 @@ export default function LoginPage() {
               </motion.div>
             ) : step === "auth" ? (
               /* Auth Form Mode */
-              <motion.div 
+              <motion.div
                 key="auth"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -272,33 +300,30 @@ export default function LoginPage() {
                 <div className="grid grid-cols-3 gap-1 bg-muted/60 dark:bg-zinc-900/60 p-1 rounded-xl border border-border/50 dark:border-zinc-800/40">
                   <button
                     onClick={() => { setAuthMethod("credentials"); setStep("auth"); }}
-                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
-                      authMethod === "credentials" 
-                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm" 
+                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${authMethod === "credentials"
+                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm"
                         : "text-muted-foreground hover:text-[#8AFF00]"
-                    }`}
+                      }`}
                   >
                     <KeyRound className="w-3 h-3" />
                     Credentials
                   </button>
                   <button
                     onClick={() => { setAuthMethod("magic"); setStep("auth"); }}
-                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
-                      authMethod === "magic" 
-                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm" 
+                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${authMethod === "magic"
+                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm"
                         : "text-muted-foreground hover:text-[#8AFF00]"
-                    }`}
+                      }`}
                   >
                     <Fingerprint className="w-3 h-3" />
                     Magic Link
                   </button>
                   <button
                     onClick={() => { setAuthMethod("sso"); setStep("auth"); }}
-                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
-                      authMethod === "sso" 
-                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm" 
+                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${authMethod === "sso"
+                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm"
                         : "text-muted-foreground hover:text-[#8AFF00]"
-                    }`}
+                      }`}
                   >
                     <Building className="w-3 h-3" />
                     SSO Enterprise
@@ -312,21 +337,19 @@ export default function LoginPage() {
                     <div className="flex border-b border-border pb-1">
                       <button
                         onClick={() => setActiveTab("signin")}
-                        className={`flex-1 text-center py-2 text-xs font-bold border-b-2 transition-all ${
-                          activeTab === "signin" 
-                            ? "border-[#8AFF00] text-[#8AFF00]" 
+                        className={`flex-1 text-center py-2 text-xs font-bold border-b-2 transition-all ${activeTab === "signin"
+                            ? "border-[#8AFF00] text-[#8AFF00]"
                             : "border-transparent text-muted-foreground hover:text-[#8AFF00]"
-                        }`}
+                          }`}
                       >
                         Sign In
                       </button>
                       <button
                         onClick={() => setActiveTab("signup")}
-                        className={`flex-1 text-center py-2 text-xs font-bold border-b-2 transition-all ${
-                          activeTab === "signup" 
-                            ? "border-[#8AFF00] text-[#8AFF00]" 
+                        className={`flex-1 text-center py-2 text-xs font-bold border-b-2 transition-all ${activeTab === "signup"
+                            ? "border-[#8AFF00] text-[#8AFF00]"
                             : "border-transparent text-muted-foreground hover:text-[#8AFF00]"
-                        }`}
+                          }`}
                       >
                         Create Account
                       </button>
@@ -372,7 +395,7 @@ export default function LoginPage() {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <PasswordStrengthIndicator 
+                          <PasswordStrengthIndicator
                             value={password}
                             onChange={(val) => setPassword(val)}
                             onStrengthChange={(lvl) => setPasswordStrength(lvl)}
@@ -474,10 +497,10 @@ export default function LoginPage() {
                     className="flex items-center justify-center gap-2 h-10 rounded-xl bg-muted/40 hover:bg-muted dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs font-semibold text-foreground hover:text-foreground dark:hover:text-white transition-colors cursor-pointer"
                   >
                     <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
                     </svg>
                     Google
                   </button>
@@ -486,7 +509,7 @@ export default function LoginPage() {
                     className="flex items-center justify-center gap-2 h-10 rounded-xl bg-muted/40 hover:bg-muted dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs font-semibold text-foreground hover:text-foreground dark:hover:text-white transition-colors cursor-pointer"
                   >
                     <svg className="w-4 h-4 mr-1 fill-current text-foreground" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+                      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
                     </svg>
                     GitHub
                   </button>
@@ -495,10 +518,10 @@ export default function LoginPage() {
                     className="flex items-center justify-center gap-2 h-10 rounded-xl bg-muted/40 hover:bg-muted dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs font-semibold text-foreground hover:text-foreground dark:hover:text-white transition-colors col-span-2 md:col-span-1 cursor-pointer"
                   >
                     <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="m23.906 13.069-.738-2.274a.428.428 0 0 0-.156-.205.42.42 0 0 0-.256-.057.42.42 0 0 0-.246.095.428.428 0 0 0-.12.235l-1.922 5.918H3.472L1.55 10.863a.434.434 0 0 0-.12-.236.42.42 0 0 0-.246-.095.42.42 0 0 0-.256.057.428.428 0 0 0-.156.205L.034 13.07a1.002 1.002 0 0 0 .363 1.116l11.106 8.07c.15.11.332.169.518.169.186 0 .368-.059.518-.17l11.106-8.07a1.002 1.002 0 0 0 .363-1.116Z" fill="#E24329"/>
-                      <path d="M12.02 24.325 23.926 13.07a1 1 0 0 0-.363-1.116l-3.328-2.422-8.215 14.793Z" fill="#FC6D26"/>
-                      <path d="M12.02 24.325 8.254 9.532H3.766l8.254 14.793Z" fill="#FCA326"/>
-                      <path d="M3.766 9.532h16.508L12.02 24.325l-8.254-14.793Z" fill="#E24329"/>
+                      <path d="m23.906 13.069-.738-2.274a.428.428 0 0 0-.156-.205.42.42 0 0 0-.256-.057.42.42 0 0 0-.246.095.428.428 0 0 0-.12.235l-1.922 5.918H3.472L1.55 10.863a.434.434 0 0 0-.12-.236.42.42 0 0 0-.246-.095.42.42 0 0 0-.256.057.428.428 0 0 0-.156.205L.034 13.07a1.002 1.002 0 0 0 .363 1.116l11.106 8.07c.15.11.332.169.518.169.186 0 .368-.059.518-.17l11.106-8.07a1.002 1.002 0 0 0 .363-1.116Z" fill="#E24329" />
+                      <path d="M12.02 24.325 23.926 13.07a1 1 0 0 0-.363-1.116l-3.328-2.422-8.215 14.793Z" fill="#FC6D26" />
+                      <path d="M12.02 24.325 8.254 9.532H3.766l8.254 14.793Z" fill="#FCA326" />
+                      <path d="M3.766 9.532h16.508L12.02 24.325l-8.254-14.793Z" fill="#E24329" />
                     </svg>
                     GitLab
                   </button>
@@ -507,7 +530,7 @@ export default function LoginPage() {
                     className="flex items-center justify-center gap-2 h-10 rounded-xl bg-muted/40 hover:bg-muted dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs font-semibold text-foreground hover:text-foreground dark:hover:text-white transition-colors col-span-2 md:col-span-1 cursor-pointer"
                   >
                     <svg className="w-4 h-4 fill-current text-foreground" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.28 2.56c-.16-.36-.53-.6-.92-.6H2.63c-.39 0-.75.24-.91.6L.07 7.78c-.14.33-.1.7.11 1l5.48 7.3c.18.23.46.37.75.37h11.19c.29 0 .57-.14.75-.37l5.48-7.3c.21-.3.25-.67.11-1l-1.66-5.22zM15.42 14.5H8.58L6.85 7.64h10.3l-1.73 6.86z"/>
+                      <path d="M22.28 2.56c-.16-.36-.53-.6-.92-.6H2.63c-.39 0-.75.24-.91.6L.07 7.78c-.14.33-.1.7.11 1l5.48 7.3c.18.23.46.37.75.37h11.19c.29 0 .57-.14.75-.37l5.48-7.3c.21-.3.25-.67.11-1l-1.66-5.22zM15.42 14.5H8.58L6.85 7.64h10.3l-1.73 6.86z" />
                     </svg>
                     Bitbucket
                   </button>
@@ -515,7 +538,7 @@ export default function LoginPage() {
               </motion.div>
             ) : step === "twoFactor" ? (
               /* Two-Factor Authentication (OTP verification step) */
-              <motion.div 
+              <motion.div
                 key="twoFactor"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -564,7 +587,7 @@ export default function LoginPage() {
                   >
                     Establish Secure Session
                   </ConfettiButton>
-                  
+
                   <button
                     type="button"
                     onClick={() => { setStep("auth"); setOtpCode(""); }}
@@ -577,7 +600,7 @@ export default function LoginPage() {
               </motion.div>
             ) : (
               /* Magic Link OTP Verification Step */
-              <motion.div 
+              <motion.div
                 key="verifyMagic"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -626,7 +649,7 @@ export default function LoginPage() {
                   >
                     Verify Passcode
                   </ConfettiButton>
-                  
+
                   <button
                     type="button"
                     onClick={() => { setStep("auth"); setMagicCode(""); }}

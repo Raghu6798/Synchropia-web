@@ -127,6 +127,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    cursor: url('/cursor.svg'), auto;
   }
   html {
     @apply font-sans;
