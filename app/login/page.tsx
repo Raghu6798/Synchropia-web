@@ -1,673 +1,616 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
+import { ArrowLeft, ArrowRight, Mail, Lock, CheckCircle2 } from "lucide-react";
 import { signIn } from "@/lib/auth-client";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Workflow,
-  Mail,
-  Lock,
-  ArrowLeft,
-  ShieldCheck,
-  ShieldAlert,
-  ArrowRight,
-  Fingerprint,
-  Building,
-  KeyRound,
-  CheckCircle2,
-  RefreshCw
-} from "lucide-react";
-import InteractiveGradient from "@/components/lightswind/interactive-gradient-card";
-import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/lightswind/input-otp";
-import { PasswordStrengthIndicator } from "@/components/lightswind/password-strength-indicator";
-import { ConfettiButton } from "@/components/lightswind/confetti-button";
-import { CoolThemeToggle } from "@/components/lightswind/cool-theme-toggle";
-import { useTheme } from "next-themes";
 
 export default function LoginPage() {
-  const { resolvedTheme } = useTheme();
-  const isDarkMode = resolvedTheme === "dark";
-
-  // Auth Configuration State
-  const [authMethod, setAuthMethod] = useState<"credentials" | "magic" | "sso">("credentials");
-  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
-  const [step, setStep] = useState<"auth" | "twoFactor" | "verifyMagic" | "ssoRedirect">("auth");
-
-  // Fields
+  const [activeTab, setActiveTab] = useState<"signin" | "create">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordStrength, setPasswordStrength] = useState("");
-  const [otpCode, setOtpCode] = useState("");
-  const [magicCode, setMagicCode] = useState("");
-  const [enterpriseEmail, setEnterpriseEmail] = useState("");
-
-  // Feedback States
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Trigger simulated toasts
-  const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
-
-  const { user, status } = useSelector((state: RootState) => state.auth);
-
-  // Check if user is already logged in, redirect home
-  useEffect(() => {
-    if (status === "authenticated" && user) {
-      window.location.href = "/";
-    }
-  }, [status, user]);
-
-  // Submit Credentials (Email/Password)
-  const handleCredentialsSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) return;
-
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      if (activeTab === "signin") {
-        // Shift to TOTP step
-        setStep("twoFactor");
-        triggerToast("Credentials verified. Please input your TOTP code.");
-      } else {
-        // Sign up success flow
-        setSuccess(true);
-        triggerToast("Account registered in database plane!");
-        setTimeout(() => {
-          setSuccess(false);
-          setActiveTab("signin");
-          setPassword("");
-        }, 1500);
-      }
-    }, 1200);
-  };
-
-  // Submit Magic Link / Email OTP Code request
-  const handleMagicLinkRequest = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-
     setIsLoading(true);
     try {
-      await signIn.magicLink({
-        email,
-        callbackURL: "/",
-      });
+      await signIn.magicLink({ email, callbackURL: "/" });
       setIsLoading(false);
-      triggerToast(`Magic link securely transmitted to ${email}`);
-      // The user will click the link in their email to log in
-    } catch (error) {
+      alert("Magic link sent!");
+    } catch {
       setIsLoading(false);
-      triggerToast("Failed to generate Magic Link.");
+      alert("Failed to send link.");
     }
   };
 
-  // Verify Magic Passcode (Email OTP)
-  const handleMagicVerification = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (magicCode.length < 6) return;
-
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      handleLoginSuccess(email);
-    }, 1500);
-  };
-
-  // Submit Enterprise SSO Domain lookup via Better Auth
-  const handleSsoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!enterpriseEmail) return;
-
-    setIsLoading(true);
-    setStep("ssoRedirect");
-
-    try {
-      // Trigger Better Auth Okta flow. It handles redirecting smoothly.
-      await signIn.oauth2({
-        providerId: "okta",
-        callbackURL: "/",
-      });
-    } catch (error) {
-      setIsLoading(false);
-      setStep("auth");
-      triggerToast("SSO Authentication failed.");
-    }
-  };
-
-  // TOTP Code Submit
-  const handleTotpSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otpCode.length < 6) return;
-
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      handleLoginSuccess(email);
-    }, 1500);
-  };
-
-  // Social OAuth trigger
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true);
-    triggerToast(`Establishing handshake with ${provider} OAuth...`);
-
     try {
-      if (provider === "Bitbucket") {
-        await signIn.oauth2({ providerId: "bitbucket", callbackURL: "/" });
-      } else {
-        await signIn.social({
-          provider: provider.toLowerCase() as "google" | "github" | "gitlab",
-          callbackURL: "/"
-        });
-      }
-    } catch (error) {
+      await signIn.social({
+        provider: provider.toLowerCase() as "google" | "apple",
+        callbackURL: "/",
+      });
+    } catch {
       setIsLoading(false);
-      triggerToast(`${provider} handshake failed.`);
     }
-  };
-
-  // Complete Simulated Auth Session
-  const handleLoginSuccess = (loginEmail: string) => {
-    setSuccess(true);
-    const mockUser = {
-      email: loginEmail,
-      name: loginEmail.split("@")[0].toUpperCase()
-    };
-    localStorage.setItem("user", JSON.stringify(mockUser));
-    // Dispatch local state change event for header
-    window.dispatchEvent(new Event("user-auth-change"));
-
-    triggerToast("Security context established. Loading dashboard node...");
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 1500);
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col items-center justify-center relative overflow-hidden px-4 select-none transition-colors duration-300">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center relative overflow-hidden select-none">
+      {/* ====== CSS Animations ====== */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes float-cube {
+          0%, 100% { transform: rotateX(25deg) rotateY(25deg) rotateZ(0deg) translateY(0px); }
+          50% { transform: rotateX(35deg) rotateY(45deg) rotateZ(10deg) translateY(-18px); }
+        }
+        @keyframes float-cube-reverse {
+          0%, 100% { transform: rotateX(-20deg) rotateY(-30deg) rotateZ(0deg) translateY(0px); }
+          50% { transform: rotateX(-30deg) rotateY(-15deg) rotateZ(-8deg) translateY(-14px); }
+        }
+        @keyframes float-diamond {
+          0%, 100% { transform: rotate(45deg) translateY(0px); opacity: 0.7; }
+          50% { transform: rotate(45deg) translateY(-12px); opacity: 1; }
+        }
+        @keyframes pulse-line {
+          0%, 100% { opacity: 0.15; }
+          50% { opacity: 0.4; }
+        }
+        @keyframes glow-floor {
+          0%, 100% { opacity: 0.7; filter: blur(20px); }
+          50% { opacity: 1; filter: blur(30px); }
+        }
+        @keyframes nebula-drift {
+          0%, 100% { transform: translateX(0%) translateY(0%); }
+          50% { transform: translateX(3%) translateY(-2%); }
+        }
+        @keyframes label-blink {
+          0%, 70%, 100% { opacity: 0.5; }
+          80% { opacity: 0.9; }
+        }
+        @keyframes star-twinkle {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+        .cube-3d {
+          transform-style: preserve-3d;
+          perspective: 600px;
+        }
+        .cube-face {
+          position: absolute;
+          border: 1px solid rgba(138,255,0,0.25);
+          background: rgba(138,255,0,0.03);
+          backdrop-filter: blur(1px);
+        }
+      `,
+        }}
+      />
 
-      {/* Background visual glows */}
-      <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-[#8AFF00]/5 dark:bg-[#8AFF00]/10 rounded-full blur-[80px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-[#3f7300]/5 dark:bg-[#3f7300]/10 rounded-full blur-[80px] pointer-events-none animate-pulse" />
+      {/* ====== Return Button ====== */}
+      <Link
+        href="/"
+        className="absolute top-7 left-8 flex items-center gap-2 text-zinc-500 hover:text-white transition-colors z-50"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span className="text-sm font-medium tracking-wide">Return</span>
+      </Link>
 
-      {/* Absolute floating toast notifications */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-6 z-50 bg-zinc-900 border border-[#8AFF00]/30 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-[0_0_25px_rgba(138,255,0,0.15)] flex items-center gap-2"
-          >
-            <ShieldCheck className="w-4 h-4 shrink-0 text-[#8AFF00]" />
-            <span>{toastMessage}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ====== BACKGROUND LAYER: Subtle green nebula & Stars ====== */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Top Nebula Image */}
+        <div
+          className="absolute top-0 left-0 w-full h-[900px] opacity-50 mix-blend-screen"
+          style={{
+            backgroundImage: "url('/nebula-bg.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "top center",
+            maskImage:
+              "linear-gradient(to bottom, black 50%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, black 50%, transparent 100%)",
+          }}
+        />
 
-      {/* Header utility bar */}
-      <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
-        <Link href="/" className="flex items-center gap-2 group text-muted-foreground hover:text-[#8AFF00] transition-colors">
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <span className="text-xs font-semibold">Back to Landing Page</span>
-        </Link>
-        <CoolThemeToggle size="sm" />
+        {/* Tiny stars scattered */}
+        {[
+          { top: "12%", left: "8%", delay: "0s" },
+          { top: "25%", left: "75%", delay: "1.5s" },
+          { top: "55%", left: "92%", delay: "0.8s" },
+          { top: "80%", left: "15%", delay: "2s" },
+          { top: "40%", left: "5%", delay: "0.3s" },
+          { top: "68%", left: "88%", delay: "1s" },
+          { top: "15%", left: "55%", delay: "2.5s" },
+          { top: "90%", left: "60%", delay: "0.5s" },
+          { top: "35%", left: "20%", delay: "1.8s" },
+          { top: "72%", left: "45%", delay: "3s" },
+        ].map((star, i) => (
+          <div
+            key={i}
+            className="absolute w-[2px] h-[2px] rounded-full bg-[#8AFF00]"
+            style={{
+              top: star.top,
+              left: star.left,
+              boxShadow: "0 0 4px rgba(138,255,0,0.6)",
+              animation: `star-twinkle ${2 + i * 0.3}s ease-in-out infinite ${star.delay}`,
+            }}
+          />
+        ))}
       </div>
 
-      <div className="w-full max-w-md relative z-10 py-12">
-        <InteractiveGradient
-          color="#8AFF00"
-          glowColor="rgba(138,255,0,0.06)"
-          width="100%"
-          borderRadius="24px"
-          className="bg-card/45 dark:bg-zinc-950/60 border border-border/80 dark:border-zinc-800/80 hover:border-[#8AFF00]/30 transition-all duration-300 shadow-[0_0_30px_rgba(138,255,0,0.02)] hover:shadow-[0_0_40px_rgba(138,255,0,0.08)] overflow-hidden p-8 flex flex-col items-stretch text-left backdrop-blur-xl"
+      {/* ====== FLOATING 3D CUBES ====== */}
+      {/* Cube: Top-Left (AGENT_01) */}
+      <div className="absolute top-[12%] left-[10%] sm:left-[14%] z-20 pointer-events-none">
+        <div className="relative">
+          <span
+            className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] tracking-[0.2em] text-[#8AFF00]/50 font-mono whitespace-nowrap"
+            style={{ animation: "label-blink 4s ease-in-out infinite" }}
+          >
+            AGENT_01
+          </span>
+          <div
+            className="w-[50px] h-[50px] sm:w-[70px] sm:h-[70px]"
+            style={{
+              transformStyle: "preserve-3d",
+              animation: "float-cube 8s ease-in-out infinite",
+            }}
+          >
+            <div
+              className="cube-face w-full h-full"
+              style={{ transform: "translateZ(25px)" }}
+            />
+            <div
+              className="cube-face w-full h-full"
+              style={{ transform: "translateZ(-25px)" }}
+            />
+            <div
+              className="cube-face w-full"
+              style={{
+                height: "50px",
+                transform: "rotateX(90deg) translateZ(25px)",
+              }}
+            />
+            <div
+              className="cube-face w-full"
+              style={{
+                height: "50px",
+                transform: "rotateX(-90deg) translateZ(25px)",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Cube: Top-Right (CORE_X12) */}
+      <div className="absolute top-[8%] right-[8%] sm:right-[12%] z-20 pointer-events-none">
+        <div className="relative">
+          <span
+            className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] tracking-[0.2em] text-[#8AFF00]/50 font-mono whitespace-nowrap flex items-center gap-1"
+            style={{ animation: "label-blink 5s ease-in-out infinite 1s" }}
+          >
+            <span className="w-[5px] h-[5px] border border-[#8AFF00]/40 rotate-45 inline-block" />
+            CORE_X12
+          </span>
+          <div
+            className="w-[55px] h-[55px] sm:w-[75px] sm:h-[75px]"
+            style={{
+              transformStyle: "preserve-3d",
+              animation: "float-cube-reverse 9s ease-in-out infinite 1s",
+            }}
+          >
+            <div
+              className="cube-face w-full h-full"
+              style={{ transform: "translateZ(28px)" }}
+            />
+            <div
+              className="cube-face w-full h-full"
+              style={{ transform: "translateZ(-28px)" }}
+            />
+            <div
+              className="cube-face w-full"
+              style={{
+                height: "55px",
+                transform: "rotateX(90deg) translateZ(28px)",
+              }}
+            />
+            <div
+              className="cube-face w-full"
+              style={{
+                height: "55px",
+                transform: "rotateX(-90deg) translateZ(28px)",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Cube: Mid-Left (NODE_7A) */}
+      <div className="absolute top-[55%] left-[4%] sm:left-[8%] z-20 pointer-events-none">
+        <div className="relative">
+          <span
+            className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-[9px] tracking-[0.2em] text-[#8AFF00]/40 font-mono whitespace-nowrap"
+            style={{ animation: "label-blink 6s ease-in-out infinite 2s" }}
+          >
+            NODE_7A
+          </span>
+          <div
+            className="w-[40px] h-[40px] sm:w-[60px] sm:h-[60px]"
+            style={{
+              transformStyle: "preserve-3d",
+              animation: "float-cube 10s ease-in-out infinite 2s",
+            }}
+          >
+            <div
+              className="cube-face w-full h-full"
+              style={{ transform: "translateZ(20px)" }}
+            />
+            <div
+              className="cube-face w-full h-full"
+              style={{ transform: "translateZ(-20px)" }}
+            />
+            <div
+              className="cube-face w-full"
+              style={{
+                height: "40px",
+                transform: "rotateX(90deg) translateZ(20px)",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Cube: Bottom-Right (SWARM_09) */}
+      <div className="absolute bottom-[15%] right-[5%] sm:right-[10%] z-20 pointer-events-none">
+        <div className="relative">
+          <span
+            className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] tracking-[0.2em] text-[#8AFF00]/40 font-mono whitespace-nowrap"
+            style={{ animation: "label-blink 5s ease-in-out infinite 3s" }}
+          >
+            SWARM_09
+          </span>
+          <div
+            className="w-[50px] h-[50px] sm:w-[65px] sm:h-[65px]"
+            style={{
+              transformStyle: "preserve-3d",
+              animation: "float-cube-reverse 7s ease-in-out infinite 0.5s",
+            }}
+          >
+            <div
+              className="cube-face w-full h-full"
+              style={{ transform: "translateZ(22px)" }}
+            />
+            <div
+              className="cube-face w-full h-full"
+              style={{ transform: "translateZ(-22px)" }}
+            />
+            <div
+              className="cube-face w-full"
+              style={{
+                height: "50px",
+                transform: "rotateX(90deg) translateZ(22px)",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ====== FLOATING DIAMONDS ====== */}
+      {[
+        { top: "18%", left: "16%", size: 14, delay: "0s", dur: "6s" },
+        { top: "42%", left: "7%", size: 10, delay: "1s", dur: "7s" },
+        { top: "30%", right: "18%", size: 12, delay: "2s", dur: "5s" },
+        { top: "75%", left: "20%", size: 8, delay: "0.5s", dur: "8s" },
+        { top: "60%", right: "15%", size: 10, delay: "1.5s", dur: "6.5s" },
+      ].map((d, i) => (
+        <div
+          key={`diamond-${i}`}
+          className="absolute border border-[#8AFF00]/40 pointer-events-none z-20"
+          style={{
+            top: d.top,
+            left: d.left,
+            right: (d as any).right,
+            width: d.size,
+            height: d.size,
+            animation: `float-diamond ${d.dur} ease-in-out infinite ${d.delay}`,
+          }}
+        />
+      ))}
+
+      {/* ====== CONNECTING LINES ====== */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none z-10"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <line
+          x1="15%"
+          y1="18%"
+          x2="35%"
+          y2="12%"
+          stroke="#8AFF00"
+          strokeWidth="0.5"
+          strokeDasharray="4 6"
+          style={{ animation: "pulse-line 4s ease-in-out infinite" }}
+        />
+        <line
+          x1="85%"
+          y1="14%"
+          x2="65%"
+          y2="10%"
+          stroke="#8AFF00"
+          strokeWidth="0.5"
+          strokeDasharray="4 6"
+          style={{ animation: "pulse-line 5s ease-in-out infinite 1s" }}
+        />
+        <line
+          x1="8%"
+          y1="58%"
+          x2="30%"
+          y2="52%"
+          stroke="#8AFF00"
+          strokeWidth="0.5"
+          strokeDasharray="4 6"
+          style={{ animation: "pulse-line 6s ease-in-out infinite 2s" }}
+        />
+        <line
+          x1="90%"
+          y1="80%"
+          x2="70%"
+          y2="75%"
+          stroke="#8AFF00"
+          strokeWidth="0.5"
+          strokeDasharray="4 6"
+          style={{ animation: "pulse-line 4.5s ease-in-out infinite 0.5s" }}
+        />
+      </svg>
+
+      {/* ====== 3D FLOOR GRID ====== */}
+      <div
+        className="absolute bottom-0 left-0 w-full h-[50vh] overflow-hidden pointer-events-none z-10"
+        style={{ perspective: "800px" }}
+      >
+        <div
+          className="absolute bottom-0 left-[-50%] w-[200%] h-[150%]"
+          style={{
+            transform: "rotateX(75deg)",
+            transformOrigin: "bottom center",
+            backgroundImage: `
+              radial-gradient(circle at 1px 1px, rgba(138,255,0,0.8) 2px, transparent 2.5px),
+              linear-gradient(to right, rgba(138,255,0,0.15) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(138,255,0,0.15) 1px, transparent 1px)
+            `,
+            backgroundSize: "120px 120px, 120px 120px, 120px 120px",
+            maskImage:
+              "linear-gradient(to bottom, transparent 0%, black 60%, black 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 0%, black 60%, black 100%)",
+          }}
+        />
+      </div>
+
+      {/* ====== KEYHOLE + LOGIN FORM ====== */}
+      <div className="relative z-30 flex justify-center items-center w-[700px] h-[900px] max-w-full shrink-0 mt-10">
+        {/* Keyhole SVG Shape */}
+        <svg
+          width="700"
+          height="900"
+          viewBox="0 0 700 900"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="absolute inset-0 w-full h-full overflow-visible pointer-events-none"
         >
-          {/* Logo header */}
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#8AFF00] to-[#3d7a00] flex items-center justify-center shadow-[0_0_15px_rgba(138,255,0,0.25)] mb-3">
-              <Workflow className="w-5 h-5 text-black" />
+          <defs>
+            <linearGradient id="keyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#D8FF7B" />
+              <stop offset="12%" stopColor="#C3FF42" />
+              <stop offset="28%" stopColor="#A6FF00" />
+              <stop offset="50%" stopColor="#8FFF00" />
+              <stop offset="72%" stopColor="#A6FF00" />
+              <stop offset="88%" stopColor="#C3FF42" />
+              <stop offset="100%" stopColor="#D8FF7B" />
+            </linearGradient>
+          </defs>
+          {/* Base Dark Fill */}
+          <path
+            d="
+            M 202 363
+            A 210 210 0 1 1 498 363
+            L 580 850
+            H 120
+            Z
+            "
+            fill="rgba(4,4,4,0.7)"
+            stroke="none"
+          />
+          {/* Dark Green Outer Border */}
+          <path
+            d="
+            M 202 363
+            A 210 210 0 1 1 498 363
+            L 580 850
+            H 120
+            Z
+            "
+            stroke="#114400"
+            strokeWidth="6"
+            fill="transparent"
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* Main Gradient Border with Inner/Outer Glow */}
+          <path
+            d="
+            M 202 363
+            A 210 210 0 1 1 498 363
+            L 580 850
+            H 120
+            Z
+            "
+            stroke="url(#keyGradient)"
+            strokeWidth="2"
+            fill="transparent"
+            vectorEffect="non-scaling-stroke"
+            style={{
+              filter: `
+                drop-shadow(0 0 2px rgba(166,255,0,.7))
+                drop-shadow(0 0 8px rgba(166,255,0,.5))
+                drop-shadow(0 0 20px rgba(166,255,0,.3))
+                drop-shadow(0 20px 40px rgba(166,255,0,.25))
+              `,
+            }}
+          />
+        </svg>
+
+        {/* ====== LOGIN UI ====== */}
+        <div className="absolute top-[120px] left-1/2 -translate-x-1/2 w-[320px] max-w-[90vw] flex flex-col items-center z-40 px-5 sm:px-6">
+          {/* 1. Header */}
+          <div className="w-full flex flex-col items-center justify-center mb-[46px]">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#8AFF00]/10 border border-[#8AFF00]/30 flex items-center justify-center mb-4">
+              <svg
+                viewBox="0 0 24 24"
+                className="w-5 h-5 sm:w-6 sm:h-6 text-[#8AFF00]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
             </div>
-            <h2 className="text-2xl font-black tracking-tight text-foreground">
-              {step === "auth" ? "Welcome to Synchropia" :
-                step === "twoFactor" ? "Security Verification" :
-                  step === "verifyMagic" ? "Confirm One-Time Passcode" :
-                    "SSO Tunnel Routing"}
+            <h1 className="text-2xl sm:text-3xl font-semibold text-white text-center leading-tight">
+              Welcome to
+            </h1>
+            <h2
+              className="text-4xl sm:text-5xl font-bold text-[#8AFF00] text-center mb-1"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              Synchropia
             </h2>
-            <p className="text-muted-foreground text-xs mt-1">
-              {step === "auth" ? "The Agentic Software Delivery Factory" :
-                step === "twoFactor" ? "VPC access requests require authenticating TOTP keys" :
-                  step === "verifyMagic" ? "Confirm secure temporary token sent to email" :
-                    "Routing access request through enterprise identity provider"}
+            <p className="text-zinc-400 text-xs text-center tracking-wide">
+              The Agentic Software Delivery Factory
             </p>
           </div>
 
-          <AnimatePresence mode="wait">
-            {success ? (
-              /* Success Screen */
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center py-12 text-center"
+          {/* 2. Tab Switcher */}
+          <div className="w-full flex items-center justify-center gap-6 sm:gap-8 border-b border-zinc-800 mb-6">
+            <button
+              onClick={() => setActiveTab("signin")}
+              className={`text-xs sm:text-sm font-semibold pb-2 transition-all ${activeTab === "signin" ? "text-[#8AFF00] border-b-2 border-[#8AFF00] translate-y-[1px]" : "text-zinc-500 hover:text-zinc-300 translate-y-[1px]"}`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => setActiveTab("create")}
+              className={`text-xs sm:text-sm font-semibold pb-2 transition-all ${activeTab === "create" ? "text-[#8AFF00] border-b-2 border-[#8AFF00] translate-y-[1px]" : "text-zinc-500 hover:text-zinc-300 translate-y-[1px]"}`}
+            >
+              Create Account
+            </button>
+          </div>
+
+          {/* 3. Form Inputs */}
+          <div className="w-full">
+            <form onSubmit={handleSignIn} className="w-full space-y-4">
+              {/* Email */}
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="youremail@company.com"
+                  className="w-full h-10 sm:h-11 pl-9 sm:pl-10 pr-4 rounded-lg bg-black/50 backdrop-blur-sm border border-zinc-700/50 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#8AFF00]/50 transition-colors"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full h-10 sm:h-11 pl-9 sm:pl-10 pr-16 rounded-lg bg-black/50 backdrop-blur-sm border border-zinc-700/50 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none focus:border-[#8AFF00]/50 transition-colors"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8AFF00] text-[10px] sm:text-xs font-semibold hover:underline"
+                >
+                  Forgot?
+                </button>
+              </div>
+
+              {/* Sign In Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-10 sm:h-12 bg-gradient-to-r from-[#8AFF00] to-[#5abf00] hover:brightness-110 text-black font-bold rounded-lg text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 transition-all disabled:opacity-50"
               >
-                <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-4 text-emerald-600 dark:text-emerald-400">
-                  <ShieldCheck className="w-8 h-8 animate-bounce" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">
-                  Access Container Staged
-                </h3>
-                <p className="text-muted-foreground text-xs max-w-[240px]">
-                  Secure TLS tunnel established. Redirecting back to workspace stream...
-                </p>
-              </motion.div>
-            ) : step === "ssoRedirect" ? (
-              /* Enterprise SSO redirection screen */
-              <motion.div
-                key="ssoRedirect"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center py-12 text-center space-y-4"
+                {isLoading ? "Signing in..." : "Sign In"}
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </button>
+            </form>
+
+            {/* Or Divider */}
+            <div className="flex items-center gap-3 sm:gap-4 w-full my-4 sm:my-5">
+              <div className="flex-1 h-px bg-zinc-800" />
+              <span className="text-[10px] sm:text-xs text-zinc-500">or</span>
+              <div className="flex-1 h-px bg-zinc-800" />
+            </div>
+
+            {/* Social Buttons */}
+            <div className="w-full space-y-4 sm:space-y-5">
+              <button
+                onClick={() => handleSocialLogin("Google")}
+                className="w-full h-10 sm:h-11 flex items-center justify-center gap-2.5 sm:gap-3 rounded-lg border border-zinc-700/50 bg-black/50 backdrop-blur-sm hover:bg-zinc-900 text-xs sm:text-sm font-medium text-white transition-colors"
               >
-                <div className="p-4 bg-[#8AFF00]/5 border border-[#8AFF00]/15 text-[#8AFF00] dark:text-[#8AFF00]/90 rounded-2xl flex items-center gap-3">
-                  <RefreshCw className="w-5 h-5 animate-spin text-[#8AFF00]" />
-                  <span className="text-xs font-semibold">Contacting SSO Gateway...</span>
-                </div>
-                <p className="text-muted-foreground text-xs max-w-[280px] leading-relaxed">
-                  Delegating federated authentication request to domain directory. Handshaking TLS keys...
-                </p>
-              </motion.div>
-            ) : step === "auth" ? (
-              /* Auth Form Mode */
-              <motion.div
-                key="auth"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    fill="#EA4335"
+                  />
+                </svg>
+                Continue with Google
+              </button>
+              <button
+                onClick={() => handleSocialLogin("Apple")}
+                className="w-full h-10 sm:h-11 flex items-center justify-center gap-2.5 sm:gap-3 rounded-lg border border-zinc-700/50 bg-black/50 backdrop-blur-sm hover:bg-zinc-900 text-xs sm:text-sm font-medium text-white transition-colors"
               >
-                {/* Method Switcher tabs */}
-                <div className="grid grid-cols-3 gap-1 bg-muted/60 dark:bg-zinc-900/60 p-1 rounded-xl border border-border/50 dark:border-zinc-800/40">
-                  <button
-                    onClick={() => { setAuthMethod("credentials"); setStep("auth"); }}
-                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${authMethod === "credentials"
-                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm"
-                        : "text-muted-foreground hover:text-[#8AFF00]"
-                      }`}
-                  >
-                    <KeyRound className="w-3 h-3" />
-                    Credentials
-                  </button>
-                  <button
-                    onClick={() => { setAuthMethod("magic"); setStep("auth"); }}
-                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${authMethod === "magic"
-                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm"
-                        : "text-muted-foreground hover:text-[#8AFF00]"
-                      }`}
-                  >
-                    <Fingerprint className="w-3 h-3" />
-                    Magic Link
-                  </button>
-                  <button
-                    onClick={() => { setAuthMethod("sso"); setStep("auth"); }}
-                    className={`py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${authMethod === "sso"
-                        ? "bg-card text-[#8AFF00] border border-border/40 dark:border-zinc-800 shadow-sm"
-                        : "text-muted-foreground hover:text-[#8AFF00]"
-                      }`}
-                  >
-                    <Building className="w-3 h-3" />
-                    SSO Enterprise
-                  </button>
-                </div>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-4 h-4 sm:w-5 sm:h-5 fill-white"
+                >
+                  <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836a9.59 9.59 0 012.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+                </svg>
+                Continue with Apple
+              </button>
+            </div>
 
-                {/* 1. CREDENTIALS FLOW */}
-                {authMethod === "credentials" && (
-                  <div className="space-y-4">
-                    {/* Tab Selection */}
-                    <div className="flex border-b border-border pb-1">
-                      <button
-                        onClick={() => setActiveTab("signin")}
-                        className={`flex-1 text-center py-2 text-xs font-bold border-b-2 transition-all ${activeTab === "signin"
-                            ? "border-[#8AFF00] text-[#8AFF00]"
-                            : "border-transparent text-muted-foreground hover:text-[#8AFF00]"
-                          }`}
-                      >
-                        Sign In
-                      </button>
-                      <button
-                        onClick={() => setActiveTab("signup")}
-                        className={`flex-1 text-center py-2 text-xs font-bold border-b-2 transition-all ${activeTab === "signup"
-                            ? "border-[#8AFF00] text-[#8AFF00]"
-                            : "border-transparent text-muted-foreground hover:text-[#8AFF00]"
-                          }`}
-                      >
-                        Create Account
-                      </button>
-                    </div>
-
-                    <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-                      {/* Email field */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                          <Mail className="w-3.5 h-3.5" />
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="e.g. engineering@company.com"
-                          className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] text-foreground outline-none transition-colors"
-                        />
-                      </div>
-
-                      {/* Password field */}
-                      {activeTab === "signin" ? (
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                              <Lock className="w-3.5 h-3.5" />
-                              Password
-                            </label>
-                            <Link href="#" className="text-[10px] text-[#8AFF00] hover:underline">
-                              Forgot?
-                            </Link>
-                          </div>
-                          <input
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••••••"
-                            className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] text-foreground outline-none transition-colors"
-                          />
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <PasswordStrengthIndicator
-                            value={password}
-                            onChange={(val) => setPassword(val)}
-                            onStrengthChange={(lvl) => setPasswordStrength(lvl)}
-                            label="Choose Password"
-                            placeholder="Min. 8 characters"
-                            showScoreNumber={true}
-                            inputProps={{
-                              className: "w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-550 text-foreground outline-none focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] transition-colors",
-                              type: "password"
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      <ConfettiButton
-                        type="submit"
-                        loading={isLoading}
-                        className="w-full rounded-xl text-xs font-extrabold h-11 mt-4 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 cursor-pointer"
-                      >
-                        {activeTab === "signin" ? "Verify Security Credentials" : "Provision Factory Node"}
-                      </ConfettiButton>
-                    </form>
-                  </div>
-                )}
-
-                {/* 2. MAGIC LINK FLOW */}
-                {authMethod === "magic" && (
-                  <form onSubmit={handleMagicLinkRequest} className="space-y-4">
-                    <div className="p-3.5 rounded-xl bg-[#8AFF00]/5 border border-[#8AFF00]/10 text-foreground dark:text-zinc-300 text-xs leading-relaxed">
-                      Enter your address to receive a secure, 6-digit one-time passcode. No password required.
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5" />
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="e.g. workspace@company.com"
-                        className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] text-foreground outline-none transition-colors"
-                      />
-                    </div>
-                    <ConfettiButton
-                      type="submit"
-                      loading={isLoading}
-                      className="w-full rounded-xl text-xs font-extrabold h-11 mt-4 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 cursor-pointer"
-                    >
-                      Transmit OTP Code
-                    </ConfettiButton>
-                  </form>
-                )}
-
-                {/* 3. ENTERPRISE SSO FLOW */}
-                {authMethod === "sso" && (
-                  <form onSubmit={handleSsoSubmit} className="space-y-4">
-                    <div className="p-3.5 rounded-xl bg-[#8AFF00]/5 border border-[#8AFF00]/10 text-foreground dark:text-zinc-300 text-xs leading-relaxed">
-                      Authenticate utilizing corporate SAML 2.0 or OIDC gateways. Enter your enterprise workspace email below.
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                        <Building className="w-3.5 h-3.5" />
-                        Enterprise Email
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={enterpriseEmail}
-                        onChange={(e) => setEnterpriseEmail(e.target.value)}
-                        placeholder="e.g. engineer@microsoft.com"
-                        className="w-full h-11 px-4 rounded-xl bg-muted/40 dark:bg-zinc-900/60 border border-border dark:border-zinc-800 text-sm placeholder-zinc-500 focus:border-[#8AFF00] focus:ring-1 focus:ring-[#8AFF00] text-foreground outline-none transition-colors"
-                      />
-                    </div>
-                    <ConfettiButton
-                      type="submit"
-                      loading={isLoading}
-                      className="w-full rounded-xl text-xs font-extrabold h-11 mt-4 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 cursor-pointer"
-                    >
-                      Authenticate via SSO
-                    </ConfettiButton>
-                  </form>
-                )}
-
-                {/* Social Login Divider */}
-                <div className="relative flex py-1 items-center">
-                  <div className="flex-grow border-t border-border/80 dark:border-zinc-900"></div>
-                  <span className="flex-shrink mx-4 text-[9px] uppercase font-bold text-zinc-500 tracking-wider">
-                    Or secure sign in with
-                  </span>
-                  <div className="flex-grow border-t border-border/80 dark:border-zinc-900"></div>
-                </div>
-
-                {/* Social Buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleSocialLogin("Google")}
-                    className="flex items-center justify-center gap-2 h-10 rounded-xl bg-muted/40 hover:bg-muted dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs font-semibold text-foreground hover:text-foreground dark:hover:text-white transition-colors cursor-pointer"
-                  >
-                    <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
-                    </svg>
-                    Google
-                  </button>
-                  <button
-                    onClick={() => handleSocialLogin("GitHub")}
-                    className="flex items-center justify-center gap-2 h-10 rounded-xl bg-muted/40 hover:bg-muted dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs font-semibold text-foreground hover:text-foreground dark:hover:text-white transition-colors cursor-pointer"
-                  >
-                    <svg className="w-4 h-4 mr-1 fill-current text-foreground" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                    </svg>
-                    GitHub
-                  </button>
-                  <button
-                    onClick={() => handleSocialLogin("GitLab")}
-                    className="flex items-center justify-center gap-2 h-10 rounded-xl bg-muted/40 hover:bg-muted dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs font-semibold text-foreground hover:text-foreground dark:hover:text-white transition-colors col-span-2 md:col-span-1 cursor-pointer"
-                  >
-                    <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="m23.906 13.069-.738-2.274a.428.428 0 0 0-.156-.205.42.42 0 0 0-.256-.057.42.42 0 0 0-.246.095.428.428 0 0 0-.12.235l-1.922 5.918H3.472L1.55 10.863a.434.434 0 0 0-.12-.236.42.42 0 0 0-.246-.095.42.42 0 0 0-.256.057.428.428 0 0 0-.156.205L.034 13.07a1.002 1.002 0 0 0 .363 1.116l11.106 8.07c.15.11.332.169.518.169.186 0 .368-.059.518-.17l11.106-8.07a1.002 1.002 0 0 0 .363-1.116Z" fill="#E24329" />
-                      <path d="M12.02 24.325 23.926 13.07a1 1 0 0 0-.363-1.116l-3.328-2.422-8.215 14.793Z" fill="#FC6D26" />
-                      <path d="M12.02 24.325 8.254 9.532H3.766l8.254 14.793Z" fill="#FCA326" />
-                      <path d="M3.766 9.532h16.508L12.02 24.325l-8.254-14.793Z" fill="#E24329" />
-                    </svg>
-                    GitLab
-                  </button>
-                  <button
-                    onClick={() => handleSocialLogin("Bitbucket")}
-                    className="flex items-center justify-center gap-2 h-10 rounded-xl bg-muted/40 hover:bg-muted dark:bg-zinc-900/40 border border-border dark:border-zinc-800 text-xs font-semibold text-foreground hover:text-foreground dark:hover:text-white transition-colors col-span-2 md:col-span-1 cursor-pointer"
-                  >
-                    <svg className="w-4 h-4 fill-current text-foreground" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.28 2.56c-.16-.36-.53-.6-.92-.6H2.63c-.39 0-.75.24-.91.6L.07 7.78c-.14.33-.1.7.11 1l5.48 7.3c.18.23.46.37.75.37h11.19c.29 0 .57-.14.75-.37l5.48-7.3c.21-.3.25-.67.11-1l-1.66-5.22zM15.42 14.5H8.58L6.85 7.64h10.3l-1.73 6.86z" />
-                    </svg>
-                    Bitbucket
-                  </button>
-                </div>
-              </motion.div>
-            ) : step === "twoFactor" ? (
-              /* Two-Factor Authentication (OTP verification step) */
-              <motion.div
-                key="twoFactor"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                <div className="p-4 rounded-2xl bg-[#8AFF00]/5 border border-[#8AFF00]/10 text-foreground dark:text-zinc-350 text-xs flex gap-3 shadow-sm">
-                  <ShieldAlert className="w-5 h-5 shrink-0 text-[#8AFF00] animate-pulse" />
-                  <div>
-                    <span className="font-bold text-[#8AFF00]">2FA Verification:</span> Secure TOTP authentication keys are active for this database plane. Input Google Authenticator code.
-                  </div>
-                </div>
-
-                <form onSubmit={handleTotpSubmit} className="space-y-6 flex flex-col items-center">
-                  <div className="space-y-2 w-full text-center">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
-                      Enter Authentication Code
-                    </label>
-                    <div className="flex justify-center pt-2">
-                      <InputOTP
-                        maxLength={6}
-                        value={otpCode}
-                        onChange={(val) => setOtpCode(val)}
-                      >
-                        <InputOTPGroup className="gap-1.5">
-                          <InputOTPSlot index={0} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground animate-pulse" />
-                          <InputOTPSlot index={1} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                          <InputOTPSlot index={2} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                        </InputOTPGroup>
-                        <InputOTPSeparator className="mx-3 text-muted-foreground text-xl font-black" />
-                        <InputOTPGroup className="gap-1.5">
-                          <InputOTPSlot index={3} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                          <InputOTPSlot index={4} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                          <InputOTPSlot index={5} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                        </InputOTPGroup>
-                      </InputOTP>
-                    </div>
-                  </div>
-
-                  <ConfettiButton
-                    type="submit"
-                    loading={isLoading}
-                    disabled={otpCode.length < 6}
-                    className="w-full rounded-xl text-xs font-extrabold h-11 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
-                  >
-                    Establish Secure Session
-                  </ConfettiButton>
-
-                  <button
-                    type="button"
-                    onClick={() => { setStep("auth"); setOtpCode(""); }}
-                    className="text-xs text-muted-foreground hover:text-[#8AFF00] flex items-center gap-1.5 transition-colors pt-2 cursor-pointer"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    Back to Credentials
-                  </button>
-                </form>
-              </motion.div>
-            ) : (
-              /* Magic Link OTP Verification Step */
-              <motion.div
-                key="verifyMagic"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6"
-              >
-                <div className="p-4 rounded-2xl bg-[#8AFF00]/5 border border-[#8AFF00]/10 text-foreground dark:text-zinc-350 text-xs flex gap-3 shadow-sm">
-                  <Fingerprint className="w-5 h-5 shrink-0 text-[#8AFF00] animate-pulse" />
-                  <div>
-                    <span className="font-bold text-[#8AFF00]">Verify Magic Link:</span> Input the 6-digit verification code transmitted to your email to authenticate this browser container.
-                  </div>
-                </div>
-
-                <form onSubmit={handleMagicVerification} className="space-y-6 flex flex-col items-center">
-                  <div className="space-y-2 w-full text-center">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
-                      Enter 6-Digit Email Code
-                    </label>
-                    <div className="flex justify-center pt-2">
-                      <InputOTP
-                        maxLength={6}
-                        value={magicCode}
-                        onChange={(val) => setMagicCode(val)}
-                      >
-                        <InputOTPGroup className="gap-1.5">
-                          <InputOTPSlot index={0} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                          <InputOTPSlot index={1} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                          <InputOTPSlot index={2} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                        </InputOTPGroup>
-                        <InputOTPSeparator className="mx-3 text-muted-foreground text-xl font-black" />
-                        <InputOTPGroup className="gap-1.5">
-                          <InputOTPSlot index={3} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                          <InputOTPSlot index={4} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                          <InputOTPSlot index={5} className="w-12 h-14 text-xl font-bold rounded-xl border border-border dark:border-zinc-700 bg-muted/40 dark:bg-zinc-900/80 text-foreground" />
-                        </InputOTPGroup>
-                      </InputOTP>
-                    </div>
-                  </div>
-
-                  <ConfettiButton
-                    type="submit"
-                    loading={isLoading}
-                    disabled={magicCode.length < 6}
-                    className="w-full rounded-xl text-xs font-extrabold h-11 bg-[#8AFF00] hover:bg-[#8AFF00]/95 text-black border border-[#8AFF00] shadow-[0_0_15px_rgba(138,255,0,0.25)] hover:shadow-[0_0_20px_rgba(138,255,0,0.4)] transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
-                  >
-                    Verify Passcode
-                  </ConfettiButton>
-
-                  <button
-                    type="button"
-                    onClick={() => { setStep("auth"); setMagicCode(""); }}
-                    className="text-xs text-muted-foreground hover:text-[#8AFF00] flex items-center gap-1.5 transition-colors pt-2 cursor-pointer"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    Back to Email Lookup
-                  </button>
-                </form>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </InteractiveGradient>
-
-        {/* Footer info text */}
-        <p className="text-center text-[10px] text-zinc-550 dark:text-zinc-650 mt-6 max-w-xs mx-auto leading-relaxed">
-          Synchropia is VPC-isolated. Security assertions, token sessions, and keys are encrypted under strict Drizzle schema guidelines in multi-tenant containers.
-        </p>
+            {/* Security Notice */}
+            <div className="flex items-start gap-2 mt-8 sm:mt-12">
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8AFF00] flex-shrink-0 mt-0.5" />
+              <p className="text-[9px] sm:text-[10px] text-zinc-500 leading-relaxed text-left">
+                Synchropia is VPC-isolated. Security assertions, token sessions,
+                and keys are encrypted under strict Drizzle schema guidelines in
+                multi-tenant containers.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

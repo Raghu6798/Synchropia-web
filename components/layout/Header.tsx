@@ -28,7 +28,6 @@ const navItems = [
     label: 'Resources',
     children: [
       { label: 'Customer Stories', description: 'See who is building with us.', href: '/resources/stories' },
-      { label: 'GitHub', description: 'View our open-source code.', href: 'https://github.com/Raghu6798/Tenacity/tree/main', external: true },
       { label: 'Community', description: 'Join our developer community.', href: '/resources/community' },
     ],
   },
@@ -243,7 +242,7 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
                 Sign In
               </Link>
               <Link
-                href="/login?signup=true"
+                href="/discover"
                 className={cn(
                   'rounded-full font-bold shadow-md transition-all duration-300 px-3.5 py-1.5',
                   isCompact ? 'text-sm' : 'text-base',

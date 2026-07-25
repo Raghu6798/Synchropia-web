@@ -3,9 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgres"
+  url      = env("DATABASE_URL")
 }
+
+// ──────────────────────────────────────────────
+// Core Auth Models (better-auth)
+// ──────────────────────────────────────────────
 
 model User {
   id            String    @id
@@ -17,7 +21,11 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
-  
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  role           String       @default("viewer") // org_admin | developer | devops | viewer
+
   @@unique([email])
   @@map("user")
 }
@@ -75,4 +83,77 @@ model Jwks {
   expiresAt  DateTime?
 
   @@map("jwks")
+}
+
+// ──────────────────────────────────────────────
+// Multi-Tenant Organization Models
+// ──────────────────────────────────────────────
+
+model Organization {
+  id              String    @id @default(cuid())
+  name            String
+  oktaOrgId       String?   @unique // Okta org/group identifier
+  oktaDomain      String?          // e.g. "your-org.okta.com"
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  users           User[]
+  connections     ServiceConnection[]
+  onboardingState OnboardingState?
+
+  @@map("organization")
+}
+
+model ServiceConnection {
+  id              String    @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Service identifier: "github" | "gitlab" | "jira" | "sonarqube" | "slack"
+  service         String
+
+  // Infisical vault path: /{org_id}/{service}/
+  vaultPath       String?  // e.g. "/cm5abc123/github"
+
+  // Service-specific metadata
+  externalOrgId   String?  // GitHub org ID, GitLab group ID, etc.
+  externalOrgName String?  // GitHub org name, GitLab group name, etc.
+  workspaceUrl    String?  // Jira domain, SonarCloud org, Slack workspace
+
+  // Selected resource IDs (repo IDs, project keys, channel IDs) as JSON
+  selectedResources String? // JSON array: ["repo1", "repo2"]
+
+  // OAuth metadata
+  scope           String?  // Granted OAuth scopes as JSON string
+  expiresAt       DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([organizationId, service])
+  @@map("service_connection")
+}
+
+model OnboardingState {
+  id              String    @id @default(cuid())
+  organizationId  String    @unique
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Wizard progress
+  currentStep     Int       @default(0)   // 0=profile, 1=github, 2=gitlab, 3=jira, 4=sonarqube, 5=slack, 6=review, 7=launch
+  completedSteps  String    @default("[]") // JSON array of completed step indices
+
+  // Per-service completion flags
+  githubConnected    Boolean @default(false)
+  gitlabConnected    Boolean @default(false)
+  jiraConnected      Boolean @default(false)
+  sonarqubeConnected Boolean @default(false)
+  slackConnected     Boolean @default(false)
+
+  isComplete      Boolean   @default(false)
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("onboarding_state")
 }

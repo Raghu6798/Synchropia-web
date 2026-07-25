@@ -21,9 +21,9 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "sqlite",
   }),
-  
+
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  
+
   session: {
     expiresIn: 60 * 60 * 8, // 8 hours
   },
@@ -45,12 +45,13 @@ export const auth = betterAuth({
 
   plugins: [
     jwt(), // Enforces client-side JWTs for sessions
-    
+
     magicLink({
       sendMagicLink: async ({ email, url }) => {
         try {
           await transporter.sendMail({
-            from: process.env.SMTP_FROM || '"Synchropia" <no-reply@synchropia.dev>',
+            from:
+              process.env.SMTP_FROM || '"Synchropia" <no-reply@synchropia.dev>',
             to: email,
             subject: "Your Magic Link to Sign In",
             text: `Click the link to sign in: ${url}`,
@@ -72,7 +73,7 @@ export const auth = betterAuth({
           authorizationUrl: `${process.env.OKTA_ISSUER}/oauth2/v1/authorize`,
           tokenUrl: `${process.env.OKTA_ISSUER}/oauth2/v1/token`,
           userInfoUrl: `${process.env.OKTA_ISSUER}/oauth2/v1/userinfo`,
-          scopes: ["openid", "profile", "email"],
+          scopes: ["openid", "profile", "email", "groups"],
           pkce: true,
         },
         {
@@ -84,7 +85,7 @@ export const auth = betterAuth({
           userInfoUrl: "https://api.bitbucket.org/2.0/user",
           scopes: ["email", "account"],
           pkce: true,
-        }
+        },
       ],
     }),
   ],
