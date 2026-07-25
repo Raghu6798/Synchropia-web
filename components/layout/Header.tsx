@@ -11,7 +11,20 @@ import { RootState } from '@/store';
 import { logout } from '@/store/slices/authSlice';
 import { signOut } from '@/lib/auth-client';
 
-const navItems = [
+type NavChild = {
+  label: string;
+  description: string;
+  href: string;
+  external?: boolean;
+};
+
+type NavItem = {
+  label: string;
+  href?: string;
+  children?: NavChild[];
+};
+
+const navItems: NavItem[] = [
   {
     label: 'Products',
     children: [

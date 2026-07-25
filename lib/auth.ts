@@ -1,10 +1,8 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { genericOAuth, magicLink, jwt } from "better-auth/plugins";
-import { PrismaClient } from "@prisma/client";
+import prisma from "./prisma";
 import nodemailer from "nodemailer";
-
-const prisma = new PrismaClient();
 
 // Configure Nodemailer for sending magic links via SMTP
 const transporter = nodemailer.createTransport({
@@ -19,8 +17,21 @@ const transporter = nodemailer.createTransport({
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: "sqlite",
+    provider: "postgresql",
   }),
+  user: {
+    additionalFields: {
+      organizationId: {
+        type: "string",
+        required: false,
+      },
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "viewer",
+      },
+    },
+  },
 
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
 

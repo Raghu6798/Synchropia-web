@@ -1,13 +1,16 @@
-import InfisicalClient from "@infisical/sdk";
+import { InfisicalSDK } from "@infisical/sdk";
 
-let _client: InfisicalClient | null = null;
+let _client: InfisicalSDK | null = null;
 
-function getClient(): InfisicalClient {
+function getClient(): InfisicalSDK {
   if (!_client) {
-    _client = new InfisicalClient({
-      token: process.env.INFISICAL_TOKEN || "",
+    const client = new InfisicalSDK({
       siteUrl: process.env.INFISICAL_SITE_URL || "https://app.infisical.com",
     });
+    if (process.env.INFISICAL_TOKEN) {
+      client.auth().accessToken(process.env.INFISICAL_TOKEN);
+    }
+    _client = client;
   }
   return _client;
 }
@@ -21,11 +24,11 @@ export function getVault() {
     /** Fetch a global secret from / (API keys, DB creds) */
     async getSecret(key: string): Promise<string | null> {
       try {
-        const secret = await client.secrets.getSecret({
+        const secret = await client.secrets().getSecret({
           projectId,
           environment,
           secretName: key,
-          path: "/",
+          secretPath: "/",
           includeImports: true,
         });
         return secret.secretValue;
@@ -37,10 +40,10 @@ export function getVault() {
     /** List all secrets at a path (e.g. /{org_id}/{service}/) */
     async listSecrets(path: string): Promise<Record<string, string>> {
       try {
-        const secrets = await client.secrets.listSecrets({
+        const secrets = await client.secrets().listSecrets({
           projectId,
           environment,
-          path,
+          secretPath: path,
           includeImports: true,
           recursive: false,
         });
@@ -75,11 +78,11 @@ export function getVault() {
     /** Fetch a single secret at an arbitrary path */
     async getSecretAtPath(key: string, path: string): Promise<string | null> {
       try {
-        const secret = await client.secrets.getSecret({
+        const secret = await client.secrets().getSecret({
           projectId,
           environment,
           secretName: key,
-          path,
+          secretPath: path,
           includeImports: true,
         });
         return secret.secretValue;
@@ -91,22 +94,20 @@ export function getVault() {
     /** Create or update a secret */
     async setSecret(key: string, value: string, path = "/"): Promise<void> {
       try {
-        await client.secrets.createSecret({
+        await client.secrets().createSecret(key, {
           projectId,
           environment,
-          secretName: key,
           secretValue: value,
-          path,
+          secretPath: path,
         });
       } catch {
         // If create fails (already exists), try update
         try {
-          await client.secrets.updateSecret({
+          await client.secrets().updateSecret(key, {
             projectId,
             environment,
-            secretName: key,
             secretValue: value,
-            path,
+            secretPath: path,
           });
         } catch (e) {
           console.error(`Failed to set secret ${key} at ${path}:`, e);
@@ -117,11 +118,10 @@ export function getVault() {
     /** Delete a secret */
     async deleteSecret(key: string, path = "/"): Promise<void> {
       try {
-        await client.secrets.deleteSecret({
+        await client.secrets().deleteSecret(key, {
           projectId,
           environment,
-          secretName: key,
-          path,
+          secretPath: path,
         });
       } catch (e) {
         console.error(`Failed to delete secret ${key} at ${path}:`, e);

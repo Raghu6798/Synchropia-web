@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { getServiceConfig, getClientCredentials } from "@/lib/oauth-config";
-
-const prisma = new PrismaClient();
 
 interface CallbackParams {
   code?: string;
@@ -137,9 +135,8 @@ export async function GET(
   // Store tokens in the credential vault (Infisical)
   await storeTokensInVault(orgId, service, accessToken, refreshToken);
 
-  // Update onboarding state
   const connectionField =
-    `${service}Connected` as keyof typeof import("@prisma/client").Prisma.OnboardingStateUpdateInput;
+    `${service}Connected` as keyof import("@/prisma/generated/client/models").OnboardingStateUpdateInput;
   await prisma.onboardingState.upsert({
     where: { organizationId: orgId },
     create: {
