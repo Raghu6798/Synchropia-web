@@ -16,7 +16,7 @@ export default function LoginPage() {
     if (!email) return;
     setIsLoading(true);
     try {
-      await signIn.magicLink({ email, callbackURL: "/" });
+      await signIn.magicLink({ email, callbackURL: "/dashboard" });
       setIsLoading(false);
       alert("Magic link sent!");
     } catch {
@@ -30,7 +30,7 @@ export default function LoginPage() {
     try {
       await signIn.social({
         provider: provider.toLowerCase() as "google" | "apple",
-        callbackURL: "/",
+        callbackURL: "/dashboard",
       });
     } catch {
       setIsLoading(false);
