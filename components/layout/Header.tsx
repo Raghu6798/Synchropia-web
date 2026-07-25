@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
   {
     label: 'Products',
     children: [
-      { label: 'Agent Builder', description: 'Create and configure agents.', href: '/products/builder' },
+      { label: 'Tenacity', description: 'Create and configure agents.', href: '/products/builder' },
       { label: 'Observability', description: 'Monitor performance.', href: '/products/observability' },
       { label: 'Memory Persistence', description: 'Manage agent state.', href: '/products/memory' },
     ],
@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
 ];
 
 type HeaderProps = {
-  isCompact: boolean;
+  isCompact?: boolean;
   isDarkMode?: boolean;
   onToggleTheme?: () => void;
 };
@@ -193,8 +193,14 @@ export default function Header({ isCompact, isDarkMode = true, onToggleTheme }: 
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-2 focus:outline-none"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-400 via-indigo-500 to-purple-600 flex items-center justify-center text-xs text-white font-bold select-none cursor-pointer shadow-md hover:scale-105 transition-transform">
-                  {user.name.slice(0, 2).toUpperCase()}
+                <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shadow-md hover:scale-105 transition-transform">
+                  {user.image ? (
+                    <img src={user.image} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-tr from-sky-400 via-indigo-500 to-purple-600 flex items-center justify-center text-xs text-white font-bold select-none cursor-pointer">
+                      {user.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
                 </div>
               </button>
 
