@@ -66,7 +66,7 @@ const gitlab: OAuthServiceConfig = {
   tokenUrl: "https://gitlab.com/oauth/token",
   docUrl: "https://docs.gitlab.com/ee/api/oauth2.html",
   supportsSelfHosted: true,
-  scopeString: "api,read_api,read_repository,write_repository",
+  scopeString: "api read_api read_repository write_repository",
   scopes: [
     {
       scope: "api",
@@ -102,7 +102,7 @@ const jira: OAuthServiceConfig = {
     "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/",
   supportsSelfHosted: false,
   scopeString:
-    "read:jira-work,write:jira-work,read:jira-project,offline_access",
+    "read:jira-work write:jira-work read:jira-project offline_access",
   scopes: [
     {
       scope: "read:jira-work",
