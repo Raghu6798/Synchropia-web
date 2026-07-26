@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.organizationId) {
+  if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -13,22 +13,34 @@ export async function POST(req: NextRequest) {
   const {
     name,
     oktaDomain,
-    githubOrg,
-    gitlabGroup,
-    jiraDomain,
-    sonarCloudOrg,
-    slackWorkspace,
   } = body;
 
-  await prisma.organization.update({
-    where: { id: session.user.organizationId },
-    data: { name, oktaDomain },
-  });
+  let orgId = session.user.organizationId;
+
+  if (!orgId) {
+    // Create new organization
+    const org = await prisma.organization.create({
+      data: { name, oktaDomain },
+    });
+    orgId = org.id;
+
+    // Update user's organizationId
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { organizationId: orgId, role: "org_admin" },
+    });
+  } else {
+    // Update existing organization
+    await prisma.organization.update({
+      where: { id: orgId },
+      data: { name, oktaDomain },
+    });
+  }
 
   await prisma.onboardingState.upsert({
-    where: { organizationId: session.user.organizationId },
+    where: { organizationId: orgId },
     create: {
-      organizationId: session.user.organizationId,
+      organizationId: orgId,
       currentStep: 1,
       completedSteps: JSON.stringify([0]),
     },

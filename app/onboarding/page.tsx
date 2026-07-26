@@ -102,7 +102,7 @@ export default function OnboardingPage() {
       });
   }, []);
 
-  const { data: session } = authClient.useSession();
+  const { data: session, refetch } = authClient.useSession();
 
   useEffect(() => {
     if (!session && !loading) {
@@ -134,12 +134,23 @@ export default function OnboardingPage() {
   };
 
   const handleSaveProfile = async () => {
-    await fetch("/api/v1/onboarding/profile", {
+    setError(null);
+    const res = await fetch("/api/v1/onboarding/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profile),
     });
-    handleNext();
+    if (res.ok) {
+      await refetch();
+      const statusRes = await fetch("/api/v1/onboarding/status");
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        setData(statusData);
+      }
+      handleNext();
+    } else {
+      setError("Failed to save organization profile");
+    }
   };
 
   const handleComplete = async () => {
