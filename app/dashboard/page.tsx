@@ -37,12 +37,12 @@ export default function DashboardPage() {
   const fetchStatus = async () => {
     try {
       const res = await fetch("/api/v1/onboarding/status");
-      const statusData: OnboardingData = await res.json();
-      setData(statusData);
-      
-      // If onboarding is not complete, redirect to onboarding page
-      if (statusData && !statusData.isComplete) {
-        router.push("/onboarding");
+      if (res.ok) {
+        const statusData: OnboardingData = await res.json();
+        setData(statusData);
+        if (!statusData.isComplete) {
+          router.push("/onboarding");
+        }
       }
     } catch (err) {
       console.error("Failed to load onboarding status", err);

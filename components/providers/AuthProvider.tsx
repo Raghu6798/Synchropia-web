@@ -25,6 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: data.user.email,
           name: data.user.name,
           image: data.user.image,
+          organizationId: (data.user as any).organizationId ?? null,
+          role: (data.user as any).role ?? null,
         },
         session: {
           id: data.session.id,

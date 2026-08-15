@@ -112,8 +112,12 @@ export default function OnboardingPage() {
 
   const isConnected = (service: string) =>
     data?.services?.[service]?.connected ?? false;
-  const isCompleted = (step: number) =>
-    data?.completed?.includes(step) ?? false;
+  const isCompleted = (step: number) => {
+    if (data?.completed?.includes(step)) return true;
+    const s = STEPS[step];
+    if (s?.service && isConnected(s.service)) return true;
+    return false;
+  };
   const canProceed = (step: number) =>
     step === 0 ? profile.name.length > 0 : true;
 
@@ -133,22 +137,56 @@ export default function OnboardingPage() {
     window.location.href = `/api/v1/services/${service}/authorize`;
   };
 
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch("/api/v1/onboarding/status");
+      const d: OnboardingData = await res.json();
+      setData(d);
+      if (d.step !== undefined) {
+        setCurrentStep(d.step);
+      }
+    } catch {
+      setError("Failed to load onboarding status");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveProfile = async () => {
-    await fetch("/api/v1/onboarding/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profile),
-    });
-    handleNext();
+    try {
+      setLoading(true);
+      const res = await fetch("/api/v1/onboarding/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+
+      if (res.ok) {
+        await authClient.getSession({ forceRefresh: true });
+        await fetchStatus();
+        handleNext();
+      } else {
+        const errJson = await res.json();
+        setError(errJson.error || "Failed to save organization profile");
+      }
+    } catch {
+      setError("Failed to save organization profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleComplete = async () => {
-    await fetch("/api/v1/onboarding/complete", { method: "POST" });
-    router.push("/");
+    try {
+      await fetch("/api/v1/onboarding/complete", { method: "POST" });
+      router.push("/dashboard");
+    } catch {
+      setError("Failed to complete onboarding");
+    }
   };
 
   if (data?.isComplete) {
-    router.push("/");
+    router.push("/dashboard");
     return null;
   }
 
@@ -306,9 +344,16 @@ export default function OnboardingPage() {
             </button>
             <button
               onClick={handleNext}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-lg text-sm transition-all"
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                serviceConfig && isConnected(serviceConfig.id)
+                  ? "bg-indigo-500 hover:bg-indigo-600 text-white shadow-sm"
+                  : "bg-white/5 hover:bg-white/10 text-white/70"
+              }`}
             >
-              Skip <ArrowRight className="w-4 h-4" />
+              {serviceConfig && isConnected(serviceConfig.id)
+                ? "Continue"
+                : "Skip"}{" "}
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         )}
