@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import Header from "@/components/layout/Header";
@@ -16,6 +17,7 @@ import {
   Layers,
   Database,
   ArrowRight,
+  MessageSquare,
 } from "lucide-react";
 
 type OnboardingData = {
@@ -102,14 +104,23 @@ export default function DashboardPage() {
               Real-time workspace integration metrics and active agent delivery streams.
             </p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-            Refresh State
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/chat"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02]"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Open Chat Workspace</span>
+            </Link>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+              Refresh State
+            </button>
+          </div>
         </div>
 
         {/* Metrics Grid */}

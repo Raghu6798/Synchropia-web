@@ -11,8 +11,8 @@ export function middleware(request: NextRequest) {
 
   const isAuthenticated = Boolean(sessionToken);
 
-  // Protect /dashboard and /onboarding routes
-  if ((pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding")) && !isAuthenticated) {
+  // Protect /dashboard, /onboarding, and /chat routes
+  if ((pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding") || pathname.startsWith("/chat")) && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
@@ -27,5 +27,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/chat/:path*", "/chat", "/login"],
 };

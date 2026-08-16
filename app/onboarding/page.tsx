@@ -162,7 +162,7 @@ export default function OnboardingPage() {
       });
 
       if (res.ok) {
-        await authClient.getSession({ forceRefresh: true });
+        await authClient.getSession({ query: { disableCookieCache: true } });
         await fetchStatus();
         handleNext();
       } else {
