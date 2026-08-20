@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import Header from "@/components/layout/Header";
@@ -18,6 +19,9 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Database,
+  ArrowRight,
+  MessageSquare,
 } from "lucide-react";
 
 import {
@@ -91,11 +95,20 @@ export default function DashboardPage() {
   const fetchStatus = async () => {
     try {
       const res = await fetch("/api/v1/onboarding/status");
+<<<<<<< HEAD
       const statusData: OnboardingData = await res.json();
       setData(statusData);
 
       if (statusData && !statusData.isComplete) {
         router.push("/onboarding");
+=======
+      if (res.ok) {
+        const statusData: OnboardingData = await res.json();
+        setData(statusData);
+        if (!statusData.isComplete) {
+          router.push("/onboarding");
+        }
+>>>>>>> origin/fronted_features
       }
     } catch (err) {
       console.error("Failed to load onboarding status", err);
@@ -212,6 +225,7 @@ export default function DashboardPage() {
               backend.
             </p>
           </div>
+<<<<<<< HEAD
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -222,6 +236,25 @@ export default function DashboardPage() {
             />
             Refresh
           </button>
+=======
+          <div className="flex items-center gap-2">
+            <Link
+              href="/chat"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02]"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Open Chat Workspace</span>
+            </Link>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+              Refresh State
+            </button>
+          </div>
+>>>>>>> origin/fronted_features
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
