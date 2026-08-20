@@ -418,9 +418,7 @@ export default function DiscoverPage() {
             {/* Security Notice */}
             <div className="flex items-start gap-2 mt-8 sm:mt-12">
               <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8AFF00] flex-shrink-0 mt-0.5" />
-              <p className="text-[9px] sm:text-[10px] text-zinc-500 leading-relaxed text-left">
-                Synchropia is VPC-isolated. Security assertions, token sessions, and keys are encrypted under strict Drizzle schema guidelines in multi-tenant containers.
-              </p>
+
             </div>
           </div>
         </div>

@@ -41,16 +41,16 @@ export const auth = betterAuth({
 
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_OAUTH_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || "",
     },
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID || "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+      clientId: process.env.GITHUB_OAUTH_CLIENT_ID || "",
+      clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET || "",
     },
     gitlab: {
-      clientId: process.env.GITLAB_CLIENT_ID || "",
-      clientSecret: process.env.GITLAB_CLIENT_SECRET || "",
+      clientId: process.env.GITLAB_OAUTH_CLIENT_ID || "",
+      clientSecret: process.env.GITLAB_OAUTH_CLIENT_SECRET || "",
     },
   },
 
