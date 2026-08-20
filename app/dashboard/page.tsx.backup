@@ -95,12 +95,20 @@ export default function DashboardPage() {
   const fetchStatus = async () => {
     try {
       const res = await fetch("/api/v1/onboarding/status");
+<<<<<<< HEAD
+      const statusData: OnboardingData = await res.json();
+      setData(statusData);
+
+      if (statusData && !statusData.isComplete) {
+        router.push("/onboarding");
+=======
       if (res.ok) {
         const statusData: OnboardingData = await res.json();
         setData(statusData);
         if (!statusData.isComplete) {
           router.push("/onboarding");
         }
+>>>>>>> origin/fronted_features
       }
     } catch (err) {
       console.error("Failed to load onboarding status", err);
@@ -217,6 +225,18 @@ export default function DashboardPage() {
               backend.
             </p>
           </div>
+<<<<<<< HEAD
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-card border border-border hover:bg-accent/60 text-foreground rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </button>
+=======
           <div className="flex items-center gap-2">
             <Link
               href="/chat"
@@ -234,6 +254,7 @@ export default function DashboardPage() {
               Refresh State
             </button>
           </div>
+>>>>>>> origin/fronted_features
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

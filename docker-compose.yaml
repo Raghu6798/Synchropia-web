@@ -1,4 +1,81 @@
 services:
+  # ──────────────────────────────────────────────────────────
+  # Kafka — single-broker KRaft mode (no Zookeeper needed)
+  # ──────────────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: synchropia-kafka
+    ports:
+      - "9092:9092" # client (host access)
+      - "9101:9101" # JMX metrics
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+
+      # --- Listeners ---
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+
+      # --- Single-broker dev-friendly replication ---
+      # (must be 1 since there's only one broker; raise these in a multi-broker cluster)
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+      # --- Log retention / cleanup ---
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_BYTES: -1
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+
+      # --- Performance / JVM ---
+      KAFKA_HEAP_OPTS: "-Xms512M -Xmx512M"
+      KAFKA_JVM_PERFORMANCE_OPTS: "-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35"
+      KAFKA_COMPRESSION_TYPE: "producer"
+
+      # --- JMX metrics (for Kafka UI / Prometheus exporters) ---
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - synchropia-net
+
+  # Optional: web UI for browsing topics/consumer groups/messages. Remove if not needed.
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: synchropia-kafka-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: synchropia-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9101
+      DYNAMIC_CONFIG_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - synchropia-net
+
   db:
     image: postgres:15-alpine
     container_name: synchropia-web-postgres
@@ -14,3 +91,4 @@ services:
 
 volumes:
   pgdata:
+

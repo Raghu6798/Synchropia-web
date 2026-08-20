@@ -19,9 +19,6 @@ import {
   Code2,
 } from "lucide-react";
 
-import { AuthInput } from "@/components/auth/AuthInput";
-import { AuthButton } from "@/components/auth/AuthButton";
-
 type OnboardingData = {
   onboarding: boolean;
   step: number;
@@ -283,195 +280,237 @@ export default function OnboardingPage() {
                   <label className="block text-sm text-white/60 mb-1">
                     Organization Name
                   </label>
-                  <AuthInput
-                    label="Organization Name"
+                  <input
                     type="text"
-                    placeholder="e.g. Synchropia Inc"
                     value={profile.name}
-                    onChange={(val) => setProfile({ ...profile, name: val })}
-                    required
+                    onChange={(e) =>
+                      setProfile({ ...profile, name: e.target.value })
+                    }
+                    placeholder="e.g. Synchropia Inc"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/50 transition-colors"
                   />
                 </div>
                 <div>
                   <label className="block text-sm text-white/60 mb-1">
                     Okta Domain
                   </label>
-                  <AuthInput
-                    label="Okta Domain"
+                  <input
                     type="text"
-                    placeholder="e.g. your-org.okta.com"
                     value={profile.oktaDomain}
-                    onChange={(val) => setProfile({ ...profile, oktaDomain: val })}
-                    required
+                    onChange={(e) =>
+                      setProfile({ ...profile, oktaDomain: e.target.value })
+                    }
+                    placeholder="e.g. your-org.okta.com"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/50 transition-colors"
                   />
                 </div>
                 <div className="flex justify-end">
-                  <AuthButton
+                  <button
                     onClick={handleSaveProfile}
-                    variant="primary"
-                    loading={loading}
                     disabled={!canProceed(step)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-40 rounded-lg text-sm font-medium transition-all"
                   >
-                    Continue <ArrowRight className="w-4 h-4 ml-2" />
-                  </AuthButton>
+                    Continue <ArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
           {step >= 1 && step <= 5 && serviceConfig && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold">Connect {serviceConfig.label}</h2>
-                  <p className="text-white/40 text-sm mt-1">
-                    Synchropia agents will use this connection to interact with your{" "}
-                    {serviceConfig.label} resources.
-                  </p>
-                </div>
-                {isConnected(serviceConfig.id) && (
-                  <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs">
-                    <CheckCircle className="w-3 h-3" /> Connected
-                  </span>
-                )}
-              </div>
-
-              {/* Scope Display */}
-              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
-                <h3 className="text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
-                  Permissions Requested
-                </h3>
-                <div className="space-y-2">
-                  {serviceConfig.scopes.map((s) => (
-                    <div key={s.scope} className="flex items-start gap-3">
-                      <div
-                        className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${
-                          s.category === "admin"
-                            ? "bg-red-400"
-                            : s.category === "write"
-                              ? "bg-amber-400"
-                              : "bg-emerald-400"
-                        }`}
-                      />
-                      <div>
-                        <code className="text-sm font-mono text-white/80">
-                          {s.scope}
-                        </code>
-                        <p className="text-xs text-white/40">{s.description}</p>
-                      </div>
-                      <span
-                        className={`ml-auto text-[10px] uppercase px-1.5 py-0.5 rounded ${
-                          s.category === "admin"
-                            ? "bg-red-500/10 text-red-400"
-                            : s.category === "write"
-                              ? "bg-amber-500/10 text-amber-400"
-                              : "bg-emerald-500/10 text-emerald-400"
-                        }`}
-                      >
-                        {s.category}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Connect / Disconnect */}
-              <div className="flex justify-end mt-4">
-                {isConnected(serviceConfig.id) ? (
-                  <span className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-sm">
-                    <CheckCircle className="w-4 h-4" /> Connected
-                  </span>
-                ) : (
-                  <AuthButton
-                    onClick={() => handleConnect(serviceConfig.id)}
-                    variant="primary"
-                    loading={loading}
-                  >
-                    Connect {serviceConfig.label} <ExternalLink className="w-4 h-4 ml-2" />
-                  </AuthButton>
-                )}
-              </div>
-            </div>
+            <ServiceConnectionCard
+              config={serviceConfig}
+              connected={isConnected(serviceConfig.id)}
+              onConnect={() => handleConnect(serviceConfig.id)}
+            />
           )}
 
           {step === 6 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold">Review & Launch</h2>
-                <p className="text-white/40 text-sm mt-1">
-                  {Object.values(data?.services ?? {}).filter((s) => s.connected).length} of {STEPS.length - 2} services connected. You can always reconnect later.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {["github", "gitlab", "jira", "sonarqube", "slack"].map((s) => {
-                  const cfg = getServiceConfig(s);
-                  const connected = data?.services?.[s]?.connected;
-                  return (
-                    <div
-                      key={s}
-                      className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl"
-                    >
-                      <div className="flex items-center gap-3">
-                        {connected ? (
-                          <CheckCircle className="w-5 h-5 text-emerald-400" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-white/20" />
-                        )}
-                        <div>
-                          <span className="text-sm font-medium">{cfg?.label ?? s}</span>
-                          {data?.services?.[s]?.orgName && (
-                            <span className="text-xs text-white/40 ml-2">
-                              {data?.services?.[s]?.orgName}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <a
-                        href={`/api/v1/services/${s}/authorize`}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                      >
-                        {connected ? "Reconnect" : "Connect"}
-                      </a>
-                    </div>
-                  )}
-                )}
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <AuthButton
-                  onClick={handleComplete}
-                  variant="primary"
-                  loading={loading}
-                  disabled={Object.values(data?.services ?? {}).filter((s) => s.connected).length === 0}
-                >
-                  <Rocket className="w-4 h-4 mr-2" /> Launch Agent Swarm
-                </AuthButton>
-              </div>
-            </div>
+            <ReviewScreen
+              services={data?.services ?? {}}
+              onComplete={handleComplete}
+            />
           )}
         </div>
 
         {/* Navigation Footer */}
         {step >= 1 && step <= 5 && (
           <div className="flex justify-between mt-8">
-            <AuthButton
+            <button
               onClick={handlePrev}
-              variant="secondary"
-              size="sm"
+              className="flex items-center gap-2 px-4 py-2 text-white/40 hover:text-white transition-colors text-sm"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
-            </AuthButton>
-            <AuthButton
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <button
               onClick={handleNext}
-              variant="primary"
-              size="sm"
-              className={`${serviceConfig && isConnected(serviceConfig.id) ? "" : "bg-white/5 hover:bg-white/10 text-white/70"}`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                serviceConfig && isConnected(serviceConfig.id)
+                  ? "bg-indigo-500 hover:bg-indigo-600 text-white shadow-sm"
+                  : "bg-white/5 hover:bg-white/10 text-white/70"
+              }`}
             >
-              {serviceConfig && isConnected(serviceConfig.id) ? "Continue" : "Skip"} <ArrowRight className="w-4 h-4 ml-2" />
-            </AuthButton>
+              {serviceConfig && isConnected(serviceConfig.id)
+                ? "Continue"
+                : "Skip"}{" "}
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ServiceConnectionCard({
+  config,
+  connected,
+  onConnect,
+}: {
+  config: OAuthServiceConfig;
+  connected: boolean;
+  onConnect: () => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Connect {config.label}</h2>
+          <p className="text-white/40 text-sm mt-1">
+            Synchropia agents will use this connection to interact with your{" "}
+            {config.label} resources.
+          </p>
+        </div>
+        {connected && (
+          <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs">
+            <CheckCircle className="w-3 h-3" /> Connected
+          </span>
+        )}
+      </div>
+
+      {/* Scope Display */}
+      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
+        <h3 className="text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">
+          Permissions Requested
+        </h3>
+        <div className="space-y-2">
+          {config.scopes.map((s) => (
+            <div key={s.scope} className="flex items-start gap-3">
+              <div
+                className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${
+                  s.category === "admin"
+                    ? "bg-red-400"
+                    : s.category === "write"
+                      ? "bg-amber-400"
+                      : "bg-emerald-400"
+                }`}
+              />
+              <div>
+                <code className="text-sm font-mono text-white/80">
+                  {s.scope}
+                </code>
+                <p className="text-xs text-white/40">{s.description}</p>
+              </div>
+              <span
+                className={`ml-auto text-[10px] uppercase px-1.5 py-0.5 rounded ${
+                  s.category === "admin"
+                    ? "bg-red-500/10 text-red-400"
+                    : s.category === "write"
+                      ? "bg-amber-500/10 text-amber-400"
+                      : "bg-emerald-500/10 text-emerald-400"
+                }`}
+              >
+                {s.category}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Connect / Disconnect */}
+      <div className="flex justify-end">
+        {connected ? (
+          <span className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-sm">
+            <CheckCircle className="w-4 h-4" /> Connected
+          </span>
+        ) : (
+          <button
+            onClick={onConnect}
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-all"
+          >
+            Connect {config.label} <ExternalLink className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReviewScreen({
+  services,
+  onComplete,
+}: {
+  services: Record<string, { connected: boolean; orgName?: string }>;
+  onComplete: () => void;
+}) {
+  const allServices = ["github", "gitlab", "jira", "sonarqube", "slack"];
+  const connectedCount = allServices.filter(
+    (s) => services[s]?.connected,
+  ).length;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold">Review & Launch</h2>
+        <p className="text-white/40 text-sm mt-1">
+          {connectedCount} of {allServices.length} services connected. You can
+          always reconnect later.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {allServices.map((s) => {
+          const cfg = getServiceConfig(s);
+          const connected = services[s]?.connected;
+          return (
+            <div
+              key={s}
+              className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl"
+            >
+              <div className="flex items-center gap-3">
+                {connected ? (
+                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                ) : (
+                  <Circle className="w-5 h-5 text-white/20" />
+                )}
+                <div>
+                  <span className="text-sm font-medium">{cfg?.label ?? s}</span>
+                  {services[s]?.orgName && (
+                    <span className="text-xs text-white/40 ml-2">
+                      {services[s].orgName}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <a
+                href={`/api/v1/services/${s}/authorize`}
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                {connected ? "Reconnect" : "Connect"}
+              </a>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <button
+          onClick={onComplete}
+          disabled={connectedCount === 0}
+          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-emerald-500 hover:opacity-90 disabled:opacity-30 rounded-xl text-sm font-semibold transition-all"
+        >
+          <Rocket className="w-4 h-4" /> Launch Agent Swarm
+        </button>
       </div>
     </div>
   );

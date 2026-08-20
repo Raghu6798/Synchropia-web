@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  serverExternalPackages: [
+    "lightningcss",
+    "@tailwindcss/postcss",
+    "@tailwindcss/oxide",
+  ],
 };
 
 export default nextConfig;

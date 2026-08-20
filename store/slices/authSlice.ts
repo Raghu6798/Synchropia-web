@@ -6,6 +6,8 @@ interface User {
   email: string;
   name: string;
   image?: string | null;
+  organizationId?: string | null;
+  role?: string | null;
 }
 
 interface Session {
